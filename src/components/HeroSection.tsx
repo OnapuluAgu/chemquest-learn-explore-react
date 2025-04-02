@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { AtomIcon, BookOpen, Flask, GraduationCap } from "lucide-react";
+import { AtomIcon, BookOpen, Beaker, GraduationCap } from "lucide-react";
 
 export const HeroSection = () => {
   return (
@@ -68,7 +68,7 @@ export const HeroSection = () => {
                   </div>
                   <div className="bg-blue-100 p-4 rounded-lg flex items-center space-x-3">
                     <div className="bg-chemistry-blue rounded-full p-2 text-white">
-                      <Flask className="h-6 w-6" />
+                      <Beaker className="h-6 w-6" />
                     </div>
                     <div>
                       <h3 className="font-medium text-gray-800">Virtual Labs</h3>

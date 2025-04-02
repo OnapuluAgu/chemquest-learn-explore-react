@@ -2,7 +2,7 @@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "./ui/button";
 import { Link } from "react-router-dom";
-import { AtomIcon, BookOpen, Flask } from "lucide-react";
+import { AtomIcon, BookOpen, Beaker } from "lucide-react";
 import { Badge } from "./ui/badge";
 
 const courses = [
@@ -21,7 +21,7 @@ const courses = [
     description: "Explore the chemistry of carbon compounds, from basic functional groups to complex reaction mechanisms.",
     modules: 6,
     level: "Intermediate",
-    icon: <Flask className="h-5 w-5" />,
+    icon: <Beaker className="h-5 w-5" />,
     color: "bg-blue-100 text-chemistry-blue",
   },
   {
