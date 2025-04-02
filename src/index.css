@@ -1,10 +1,11 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 220 100% 98%;
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
@@ -13,7 +14,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 250 84% 54%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -22,7 +23,7 @@
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 210 40% 96.1%;
+    --accent: 194 95% 50%;
     --accent-foreground: 222.2 47.4% 11.2%;
 
     --destructive: 0 84.2% 60.2%;
@@ -35,19 +36,12 @@
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -61,7 +55,7 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
+    --primary: 250 84% 54%;
     --primary-foreground: 222.2 47.4% 11.2%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -70,7 +64,7 @@
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 217.2 32.6% 17.5%;
+    --accent: 194 95% 50%;
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 62.8% 30.6%;
@@ -98,4 +92,59 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+.molecule-icon {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.atom {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.atom-1 {
+  width: 30px;
+  height: 30px;
+  background-color: #6E59A5;
+  top: 10px;
+  left: 25px;
+}
+
+.atom-2 {
+  width: 25px;
+  height: 25px;
+  background-color: #0EA5E9;
+  bottom: 15px;
+  left: 15px;
+}
+
+.atom-3 {
+  width: 20px;
+  height: 20px;
+  background-color: #33C3F0;
+  bottom: 20px;
+  right: 15px;
+}
+
+.bond {
+  position: absolute;
+  width: 5px;
+  height: 30px;
+  background-color: #E5DEFF;
+  transform-origin: center;
+}
+
+.bond-1 {
+  top: 35px;
+  left: 38px;
+  transform: rotate(45deg);
+}
+
+.bond-2 {
+  top: 35px;
+  left: 38px;
+  transform: rotate(-45deg);
 }
