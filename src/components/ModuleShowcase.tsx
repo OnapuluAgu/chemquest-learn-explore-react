@@ -18,6 +18,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { VirtualLabPreview } from "./VirtualLabPreview";
 
 export const ModuleShowcase = () => {
   const [rotating, setRotating] = useState(false);
@@ -245,10 +246,7 @@ export const ModuleShowcase = () => {
               <CardContent className="p-6">
                 <div className="flex flex-col md:flex-row gap-8 items-center">
                   <div className="md:w-1/2">
-                    <div className="bg-gray-200 rounded-lg aspect-video flex items-center justify-center">
-                      <BeakerIcon className="h-16 w-16 text-gray-400" />
-                      <span className="ml-2 text-gray-500">Virtual Lab Preview</span>
-                    </div>
+                    <VirtualLabPreview />
                   </div>
                   <div className="md:w-1/2">
                     <h3 className="text-xl font-semibold mb-4">Safe Virtual Lab Environment</h3>
@@ -276,6 +274,31 @@ export const ModuleShowcase = () => {
                         <span className="text-gray-700">Reaction rate experiments with data analysis</span>
                       </li>
                     </ul>
+                    
+                    <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                      <h4 className="font-medium text-chemistry-blue mb-2">Try it yourself!</h4>
+                      <p className="text-sm text-gray-700 mb-3">
+                        In the virtual lab preview, you can:
+                      </p>
+                      <ul className="text-sm space-y-2">
+                        <li className="flex items-center">
+                          <span className="bg-chemistry-blue text-white rounded-full w-5 h-5 inline-flex items-center justify-center mr-2">1</span>
+                          <span>Adjust temperature and concentration sliders</span>
+                        </li>
+                        <li className="flex items-center">
+                          <span className="bg-chemistry-blue text-white rounded-full w-5 h-5 inline-flex items-center justify-center mr-2">2</span>
+                          <span>Start the reaction to observe color changes</span>
+                        </li>
+                        <li className="flex items-center">
+                          <span className="bg-chemistry-blue text-white rounded-full w-5 h-5 inline-flex items-center justify-center mr-2">3</span>
+                          <span>Monitor reaction data in real-time</span>
+                        </li>
+                        <li className="flex items-center">
+                          <span className="bg-chemistry-blue text-white rounded-full w-5 h-5 inline-flex items-center justify-center mr-2">4</span>
+                          <span>Reset the experiment to try different parameters</span>
+                        </li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
               </CardContent>
