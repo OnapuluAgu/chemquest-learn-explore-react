@@ -1,5 +1,5 @@
 
-import { supabase } from './supabase';
+import { supabase, isSupabaseConfigured } from './supabase';
 
 // Types for our data
 export type UserCourse = {
@@ -29,8 +29,53 @@ export type UserActivity = {
   created_at: string;
 };
 
+// Mock data for when Supabase is not configured
+const mockUserCourses: UserCourse[] = [
+  {
+    id: "CQ101",
+    title: "CQ101: Foundations of Chemistry",
+    progress: 0,
+    last_accessed: new Date().toISOString(),
+    modules_completed: 0,
+    modules_total: 5,
+    next_module: "Introduction to Chemistry",
+    course_icon: "atom",
+    color_class: "bg-chemistry-soft-purple text-chemistry-purple",
+  }
+];
+
+const mockUserAchievements: UserAchievement[] = [
+  { 
+    id: "A1", 
+    title: "Quick Learner", 
+    description: "Complete 5 modules in under a week", 
+    icon: "clock", 
+    achieved: false 
+  },
+  { 
+    id: "A2", 
+    title: "Chemistry Novice", 
+    description: "Earn 75% or higher on 3 quizzes", 
+    icon: "trophy", 
+    achieved: false 
+  }
+];
+
+const mockUserActivities: UserActivity[] = [
+  { 
+    id: "ACT1", 
+    description: "Start your chemistry journey by enrolling in a course", 
+    created_at: new Date().toISOString() 
+  }
+];
+
 // User courses
 export const getUserCourses = async () => {
+  if (!isSupabaseConfigured) {
+    console.log('Using mock course data (Supabase not configured)');
+    return mockUserCourses;
+  }
+
   const { data: userCourses, error } = await supabase
     .from('user_courses')
     .select('*')
@@ -46,6 +91,11 @@ export const getUserCourses = async () => {
 
 // User achievements
 export const getUserAchievements = async () => {
+  if (!isSupabaseConfigured) {
+    console.log('Using mock achievement data (Supabase not configured)');
+    return mockUserAchievements;
+  }
+
   const { data: achievements, error } = await supabase
     .from('user_achievements')
     .select('*')
@@ -61,6 +111,11 @@ export const getUserAchievements = async () => {
 
 // User activities
 export const getUserActivities = async () => {
+  if (!isSupabaseConfigured) {
+    console.log('Using mock activity data (Supabase not configured)');
+    return mockUserActivities;
+  }
+
   const { data: activities, error } = await supabase
     .from('user_activities')
     .select('*')
