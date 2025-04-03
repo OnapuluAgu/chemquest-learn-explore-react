@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { VirtualLabPreview } from "./VirtualLabPreview";
+import { QuizPreview } from "./QuizPreview";
 
 export const ModuleShowcase = () => {
   const [rotating, setRotating] = useState(false);
@@ -310,10 +311,7 @@ export const ModuleShowcase = () => {
               <CardContent className="p-6">
                 <div className="flex flex-col md:flex-row gap-8 items-center">
                   <div className="md:w-1/2">
-                    <div className="bg-gray-200 rounded-lg aspect-video flex items-center justify-center">
-                      <Lightbulb className="h-16 w-16 text-gray-400" />
-                      <span className="ml-2 text-gray-500">Quiz Preview</span>
-                    </div>
+                    <QuizPreview />
                   </div>
                   <div className="md:w-1/2">
                     <h3 className="text-xl font-semibold mb-4">Personalized Assessment</h3>
@@ -341,6 +339,31 @@ export const ModuleShowcase = () => {
                         <span className="text-gray-700">Progress tracking to identify areas for improvement</span>
                       </li>
                     </ul>
+                    
+                    <div className="mt-6 p-4 bg-amber-50 rounded-lg">
+                      <h4 className="font-medium text-amber-700 mb-2">Try it yourself!</h4>
+                      <p className="text-sm text-gray-700 mb-3">
+                        In this quiz preview, you can:
+                      </p>
+                      <ul className="text-sm space-y-2">
+                        <li className="flex items-center">
+                          <span className="bg-amber-600 text-white rounded-full w-5 h-5 inline-flex items-center justify-center mr-2">1</span>
+                          <span>Answer multiple-choice chemistry questions</span>
+                        </li>
+                        <li className="flex items-center">
+                          <span className="bg-amber-600 text-white rounded-full w-5 h-5 inline-flex items-center justify-center mr-2">2</span>
+                          <span>Receive instant feedback on your answers</span>
+                        </li>
+                        <li className="flex items-center">
+                          <span className="bg-amber-600 text-white rounded-full w-5 h-5 inline-flex items-center justify-center mr-2">3</span>
+                          <span>Learn from detailed explanations for each question</span>
+                        </li>
+                        <li className="flex items-center">
+                          <span className="bg-amber-600 text-white rounded-full w-5 h-5 inline-flex items-center justify-center mr-2">4</span>
+                          <span>Track your progress through the sample quiz</span>
+                        </li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
               </CardContent>
