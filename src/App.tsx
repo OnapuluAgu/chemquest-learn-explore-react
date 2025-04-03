@@ -6,6 +6,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { useEffect } from "react";
+import { checkSupabaseConfiguration } from "@/lib/supabase";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import CoursesPage from "./pages/CoursesPage";
@@ -31,7 +33,11 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
-  console.log("App rendering");
+  useEffect(() => {
+    console.log("App rendering, checking Supabase configuration");
+    const isConfigured = checkSupabaseConfiguration();
+    console.log("Supabase configuration check result:", isConfigured);
+  }, []);
   
   return (
     <QueryClientProvider client={queryClient}>
