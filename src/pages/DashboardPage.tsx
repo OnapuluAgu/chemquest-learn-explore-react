@@ -1,55 +1,140 @@
 
+import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AtomIcon, Beaker, BookOpen, Clock, ChevronsRight, Award, Trophy, Calendar } from "lucide-react";
+import { AtomIcon, Beaker, ChevronsRight, Award, Trophy, Calendar, Clock, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-
-const enrolledCourses = [
-  {
-    id: "CQ101",
-    title: "CQ101: Foundations of Chemistry",
-    progress: 65,
-    lastAccessed: "2 days ago",
-    modules: {
-      completed: 3,
-      total: 5
-    },
-    nextModule: "Chemical Reactions",
-    icon: <AtomIcon className="h-5 w-5" />,
-    color: "bg-chemistry-soft-purple text-chemistry-purple",
-  },
-  {
-    id: "CQ201",
-    title: "CQ201: Organic Chemistry",
-    progress: 30,
-    lastAccessed: "5 days ago",
-    modules: {
-      completed: 2,
-      total: 6
-    },
-    nextModule: "Alkenes and Alkynes",
-    icon: <Beaker className="h-5 w-5" />,
-    color: "bg-blue-100 text-chemistry-blue",
-  }
-];
-
-const achievements = [
-  { title: "Quick Learner", description: "Complete 5 modules in under a week", icon: <Clock className="h-4 w-4" />, achieved: true },
-  { title: "Chemistry Novice", description: "Earn 75% or higher on 3 quizzes", icon: <Trophy className="h-4 w-4" />, achieved: true },
-  { title: "Consistent Student", description: "Log in 5 days in a row", icon: <Calendar className="h-4 w-4" />, achieved: false },
-  { title: "Master of Molecules", description: "Complete all organic chemistry modules", icon: <AtomIcon className="h-4 w-4" />, achieved: false }
-];
-
-const recentActivities = [
-  { description: "Completed quiz in CQ101: Chemical Bonding", time: "Yesterday, 3:42 PM" },
-  { description: "Started module: Alkenes and Alkynes", time: "5 days ago, 10:15 AM" },
-  { description: "Earned achievement: Quick Learner", time: "1 week ago, 11:30 AM" }
-];
+import { getUserCourses, getUserAchievements, getUserActivities } from "@/lib/api";
+import { format, parseISO } from "date-fns";
 
 const DashboardPage = () => {
+  const { 
+    data: courses = [], 
+    isLoading: isLoadingCourses 
+  } = useQuery({
+    queryKey: ['userCourses'],
+    queryFn: getUserCourses
+  });
+
+  const { 
+    data: achievements = [], 
+    isLoading: isLoadingAchievements 
+  } = useQuery({
+    queryKey: ['userAchievements'],
+    queryFn: getUserAchievements
+  });
+
+  const { 
+    data: activities = [], 
+    isLoading: isLoadingActivities 
+  } = useQuery({
+    queryKey: ['userActivities'],
+    queryFn: getUserActivities
+  });
+
+  // Map the data to match the UI components
+  const mappedCourses = courses.map(course => ({
+    id: course.id,
+    title: course.title,
+    progress: course.progress,
+    lastAccessed: course.last_accessed ? format(parseISO(course.last_accessed), "MMM d, yyyy") : "Never",
+    modules: {
+      completed: course.modules_completed,
+      total: course.modules_total
+    },
+    nextModule: course.next_module,
+    icon: getIconFromName(course.course_icon),
+    color: course.color_class,
+  }));
+
+  const mappedAchievements = achievements.map(achievement => ({
+    title: achievement.title,
+    description: achievement.description,
+    icon: getIconFromName(achievement.icon),
+    achieved: achievement.achieved,
+    achievedDate: achievement.achieved_date ? parseISO(achievement.achieved_date) : undefined
+  }));
+
+  const mappedActivities = activities.map(activity => ({
+    description: activity.description,
+    time: activity.created_at ? formatActivityTime(parseISO(activity.created_at)) : ""
+  }));
+
+  function getIconFromName(iconName: string) {
+    switch (iconName) {
+      case 'atom':
+        return <AtomIcon className="h-5 w-5" />;
+      case 'beaker':
+        return <Beaker className="h-5 w-5" />;
+      case 'clock':
+        return <Clock className="h-5 w-5" />;
+      case 'trophy':
+        return <Trophy className="h-5 w-5" />;
+      case 'calendar':
+        return <Calendar className="h-5 w-5" />;
+      case 'book':
+        return <BookOpen className="h-5 w-5" />;
+      default:
+        return <AtomIcon className="h-5 w-5" />;
+    }
+  }
+
+  function formatActivityTime(date: Date) {
+    const now = new Date();
+    const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (diffInDays === 0) {
+      return `Today, ${format(date, "h:mm a")}`;
+    } else if (diffInDays === 1) {
+      return `Yesterday, ${format(date, "h:mm a")}`;
+    } else if (diffInDays < 7) {
+      return `${diffInDays} days ago, ${format(date, "h:mm a")}`;
+    } else {
+      return format(date, "MMM d, yyyy, h:mm a");
+    }
+  }
+
+  // Show loading state if data is loading
+  const isLoading = isLoadingCourses || isLoadingAchievements || isLoadingActivities;
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-6 py-12 flex justify-center items-center min-h-[60vh]">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-chemistry-purple"></div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Use fallback data if no courses or achievements are available
+  const coursesToDisplay = mappedCourses.length > 0 ? mappedCourses : [
+    {
+      id: "CQ101",
+      title: "CQ101: Foundations of Chemistry",
+      progress: 0,
+      lastAccessed: "Never",
+      modules: {
+        completed: 0,
+        total: 5
+      },
+      nextModule: "Introduction to Chemistry",
+      icon: <AtomIcon className="h-5 w-5" />,
+      color: "bg-chemistry-soft-purple text-chemistry-purple",
+    }
+  ];
+
+  const achievementsToDisplay = mappedAchievements.length > 0 ? mappedAchievements : [
+    { title: "Quick Learner", description: "Complete 5 modules in under a week", icon: <Clock className="h-4 w-4" />, achieved: false },
+    { title: "Chemistry Novice", description: "Earn 75% or higher on 3 quizzes", icon: <Trophy className="h-4 w-4" />, achieved: false }
+  ];
+
+  const activitiesToDisplay = mappedActivities.length > 0 ? mappedActivities : [
+    { description: "Start your chemistry journey by enrolling in a course", time: "Now" },
+  ];
+
   return (
     <Layout>
       <div className="container mx-auto px-6 py-12">
@@ -71,7 +156,7 @@ const DashboardPage = () => {
                   <CardDescription>Your overall learning progress</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {enrolledCourses.map((course) => (
+                  {coursesToDisplay.map((course) => (
                     <div key={course.id} className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="font-medium text-sm">{course.title}</span>
@@ -89,7 +174,7 @@ const DashboardPage = () => {
                   <CardDescription>Your latest accomplishments</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {achievements.filter(a => a.achieved).slice(0, 3).map((achievement, index) => (
+                  {achievementsToDisplay.filter(a => a.achieved).slice(0, 3).map((achievement, index) => (
                     <div key={index} className="flex items-center space-x-3">
                       <div className="bg-green-100 p-2 rounded-full text-green-600">
                         {achievement.icon}
@@ -100,6 +185,11 @@ const DashboardPage = () => {
                       </div>
                     </div>
                   ))}
+                  {achievementsToDisplay.filter(a => a.achieved).length === 0 && (
+                    <div className="text-center py-4 text-gray-500">
+                      <p>No achievements yet. Start learning to earn your first achievement!</p>
+                    </div>
+                  )}
                   <Button variant="link" asChild className="text-chemistry-purple p-0">
                     <Link to="#achievements">View all achievements</Link>
                   </Button>
@@ -112,7 +202,7 @@ const DashboardPage = () => {
                   <CardDescription>Pick up where you left off</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {enrolledCourses.map((course) => (
+                  {coursesToDisplay.map((course) => (
                     <div key={course.id} className="border rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                       <div className="flex items-center gap-3">
                         <div className={`p-2 rounded-md ${course.color}`}>
@@ -146,7 +236,7 @@ const DashboardPage = () => {
           
           <TabsContent value="courses" className="space-y-4">
             <h2 className="text-2xl font-semibold mb-4">My Enrolled Courses</h2>
-            {enrolledCourses.map((course) => (
+            {coursesToDisplay.map((course) => (
               <Card key={course.id}>
                 <CardContent className="p-6">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -180,7 +270,7 @@ const DashboardPage = () => {
           
           <TabsContent value="achievements" id="achievements">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {achievements.map((achievement, index) => (
+              {achievementsToDisplay.map((achievement, index) => (
                 <Card key={index} className={achievement.achieved ? "" : "opacity-60"}>
                   <CardContent className="p-6">
                     <div className="flex items-center gap-4">
@@ -217,11 +307,11 @@ const DashboardPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  {recentActivities.map((activity, index) => (
+                  {activitiesToDisplay.map((activity, index) => (
                     <div key={index} className="flex gap-4 pb-4 border-b last:border-b-0 last:pb-0">
                       <div className="relative flex h-6 w-6 flex-none items-center justify-center">
                         <div className="bg-chemistry-soft-purple h-2 w-2 rounded-full" />
-                        {index !== recentActivities.length - 1 && (
+                        {index !== activitiesToDisplay.length - 1 && (
                           <div className="absolute top-6 bottom-0 left-1/2 h-full w-px -translate-x-1/2 bg-gray-200" />
                         )}
                       </div>

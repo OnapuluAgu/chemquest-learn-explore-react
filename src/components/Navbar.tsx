@@ -1,9 +1,10 @@
 
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { AtomIcon, BookOpenIcon, Home, LayoutDashboard, Menu, X } from "lucide-react";
+import { AtomIcon, BookOpenIcon, Home, LayoutDashboard, Menu, X, LogOut } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 const NavLinks = [
   { name: "Home", href: "/", icon: <Home className="h-4 w-4 mr-2" /> },
@@ -13,6 +14,13 @@ const NavLinks = [
 
 export const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
 
   return (
     <nav className="bg-white border-b border-gray-100 py-4 px-6 sticky top-0 z-50">
@@ -44,12 +52,37 @@ export const Navbar = () => {
           </div>
 
           <div className="hidden md:flex items-center space-x-2">
-            <Button variant="outline" className="border-chemistry-purple text-chemistry-purple hover:bg-chemistry-purple hover:text-white">
-              Sign In
-            </Button>
-            <Button className="bg-chemistry-purple hover:bg-chemistry-blue text-white">
-              Sign Up
-            </Button>
+            {user ? (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">
+                  {user.email}
+                </span>
+                <Button 
+                  variant="outline" 
+                  className="border-chemistry-purple text-chemistry-purple hover:bg-chemistry-purple hover:text-white"
+                  onClick={handleSignOut}
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </Button>
+              </div>
+            ) : (
+              <>
+                <Button 
+                  variant="outline" 
+                  className="border-chemistry-purple text-chemistry-purple hover:bg-chemistry-purple hover:text-white"
+                  onClick={() => navigate('/auth')}
+                >
+                  Sign In
+                </Button>
+                <Button 
+                  className="bg-chemistry-purple hover:bg-chemistry-blue text-white"
+                  onClick={() => navigate('/auth?tab=signup')}
+                >
+                  Sign Up
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -86,12 +119,46 @@ export const Navbar = () => {
               </Link>
             ))}
             <div className="flex flex-col space-y-2 pt-2">
-              <Button variant="outline" className="w-full border-chemistry-purple text-chemistry-purple hover:bg-chemistry-purple hover:text-white">
-                Sign In
-              </Button>
-              <Button className="w-full bg-chemistry-purple hover:bg-chemistry-blue text-white">
-                Sign Up
-              </Button>
+              {user ? (
+                <>
+                  <div className="text-sm text-gray-600 py-2">
+                    {user.email}
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    className="w-full border-chemistry-purple text-chemistry-purple hover:bg-chemistry-purple hover:text-white"
+                    onClick={() => {
+                      handleSignOut();
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sign Out
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button 
+                    variant="outline" 
+                    className="w-full border-chemistry-purple text-chemistry-purple hover:bg-chemistry-purple hover:text-white"
+                    onClick={() => {
+                      navigate('/auth');
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    Sign In
+                  </Button>
+                  <Button 
+                    className="w-full bg-chemistry-purple hover:bg-chemistry-blue text-white"
+                    onClick={() => {
+                      navigate('/auth?tab=signup');
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    Sign Up
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
