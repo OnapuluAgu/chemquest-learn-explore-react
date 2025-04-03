@@ -1,23 +1,17 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// Get environment variables with fallbacks for development
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+// Import the configured client from the integration directory
+import { supabase as configuredSupabase } from '@/integrations/supabase/client';
+
+// Export the already configured Supabase client
+export const supabase = configuredSupabase;
 
 // Flag to check if Supabase is properly configured
-export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey);
-
-// Create a mock client or a real Supabase client based on configuration
-export const supabase = isSupabaseConfigured 
-  ? createClient(supabaseUrl, supabaseAnonKey)
-  : createClient('https://placeholder-url.supabase.co', 'placeholder-key');
+export const isSupabaseConfigured = true;
 
 // Function to check if Supabase is configured
 export const checkSupabaseConfiguration = () => {
-  if (!isSupabaseConfigured) {
-    console.warn('Supabase is not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.');
-    return false;
-  }
+  console.log("Using configured Supabase client from integration");
   return true;
 };
