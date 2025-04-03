@@ -29,7 +29,7 @@ export type UserActivity = {
   created_at: string;
 };
 
-// Mock data for when Supabase is not configured
+// Mock data for when Supabase is not configured or user is not logged in
 const mockUserCourses: UserCourse[] = [
   {
     id: "CQ101",
@@ -69,63 +69,107 @@ const mockUserActivities: UserActivity[] = [
   }
 ];
 
+// Helper function to check if user is authenticated
+const isUserAuthenticated = () => {
+  return supabase.auth.getSession().then(({ data }) => !!data.session);
+};
+
 // User courses
 export const getUserCourses = async () => {
+  // If Supabase is not configured, return mock data
   if (!isSupabaseConfigured) {
     console.log('Using mock course data (Supabase not configured)');
     return mockUserCourses;
   }
 
-  const { data: userCourses, error } = await supabase
-    .from('user_courses')
-    .select('*')
-    .order('last_accessed', { ascending: false });
-
-  if (error) {
-    console.error('Error fetching user courses:', error);
-    throw error;
+  // Check if user is authenticated
+  const isAuthenticated = await isUserAuthenticated();
+  if (!isAuthenticated) {
+    console.log('Using mock course data (User not authenticated)');
+    return mockUserCourses;
   }
 
-  return userCourses as UserCourse[];
+  try {
+    const { data: userCourses, error } = await supabase
+      .from('user_courses')
+      .select('*')
+      .order('last_accessed', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching user courses:', error);
+      throw error;
+    }
+
+    return userCourses as UserCourse[];
+  } catch (error) {
+    console.error('Exception in getUserCourses:', error);
+    return mockUserCourses;
+  }
 };
 
 // User achievements
 export const getUserAchievements = async () => {
+  // If Supabase is not configured, return mock data
   if (!isSupabaseConfigured) {
     console.log('Using mock achievement data (Supabase not configured)');
     return mockUserAchievements;
   }
 
-  const { data: achievements, error } = await supabase
-    .from('user_achievements')
-    .select('*')
-    .order('achieved', { ascending: false });
-
-  if (error) {
-    console.error('Error fetching user achievements:', error);
-    throw error;
+  // Check if user is authenticated
+  const isAuthenticated = await isUserAuthenticated();
+  if (!isAuthenticated) {
+    console.log('Using mock achievement data (User not authenticated)');
+    return mockUserAchievements;
   }
 
-  return achievements as UserAchievement[];
+  try {
+    const { data: achievements, error } = await supabase
+      .from('user_achievements')
+      .select('*')
+      .order('achieved', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching user achievements:', error);
+      throw error;
+    }
+
+    return achievements as UserAchievement[];
+  } catch (error) {
+    console.error('Exception in getUserAchievements:', error);
+    return mockUserAchievements;
+  }
 };
 
 // User activities
 export const getUserActivities = async () => {
+  // If Supabase is not configured, return mock data
   if (!isSupabaseConfigured) {
     console.log('Using mock activity data (Supabase not configured)');
     return mockUserActivities;
   }
 
-  const { data: activities, error } = await supabase
-    .from('user_activities')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(10);
-
-  if (error) {
-    console.error('Error fetching user activities:', error);
-    throw error;
+  // Check if user is authenticated
+  const isAuthenticated = await isUserAuthenticated();
+  if (!isAuthenticated) {
+    console.log('Using mock activity data (User not authenticated)');
+    return mockUserActivities;
   }
 
-  return activities as UserActivity[];
+  try {
+    const { data: activities, error } = await supabase
+      .from('user_activities')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    if (error) {
+      console.error('Error fetching user activities:', error);
+      throw error;
+    }
+
+    return activities as UserActivity[];
+  } catch (error) {
+    console.error('Exception in getUserActivities:', error);
+    return mockUserActivities;
+  }
 };
