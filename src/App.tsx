@@ -63,9 +63,26 @@ const App = () => {
                   <ModuleDetailPage />
                 </ProtectedRoute>
               } />
+              {/* Main interactive page route */}
               <Route path="/module-interactive/:interactiveId" element={
                 <ProtectedRoute>
                   <ModuleInteractivePage />
+                </ProtectedRoute>
+              } />
+              {/* Specific interactive type routes with better URL patterns */}
+              <Route path="/interactive/molecule/:interactiveId" element={
+                <ProtectedRoute>
+                  <ModuleInteractivePage type="molecule" />
+                </ProtectedRoute>
+              } />
+              <Route path="/interactive/periodic-table/:interactiveId" element={
+                <ProtectedRoute>
+                  <ModuleInteractivePage type="periodic-table" />
+                </ProtectedRoute>
+              } />
+              <Route path="/interactive/chemical-reaction/:interactiveId" element={
+                <ProtectedRoute>
+                  <ModuleInteractivePage type="chemical-reaction" />
                 </ProtectedRoute>
               } />
               <Route path="/dashboard" element={

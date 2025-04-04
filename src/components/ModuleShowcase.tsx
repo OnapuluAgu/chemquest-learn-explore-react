@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -20,12 +19,14 @@ import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { VirtualLabPreview } from "./VirtualLabPreview";
 import { QuizPreview } from "./QuizPreview";
+import { useNavigate } from "react-router-dom";
 
 export const ModuleShowcase = () => {
   const [rotating, setRotating] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [activeElement, setActiveElement] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
 
   const handleZoomIn = () => {
     setZoom(prev => Math.min(prev + 0.2, 2));
@@ -41,6 +42,24 @@ export const ModuleShowcase = () => {
 
   const handleElementClick = (element: string) => {
     setActiveElement(element === activeElement ? null : element);
+  };
+
+  const navigateToInteractive = (type: string, title: string) => {
+    const formattedTitle = title.toLowerCase().replace(/\s+/g, '-');
+    
+    switch (type.toLowerCase()) {
+      case 'molecule':
+        navigate(`/interactive/molecule/${formattedTitle}`);
+        break;
+      case 'periodic-table':
+        navigate(`/interactive/periodic-table/${formattedTitle}`);
+        break;
+      case 'chemical-reaction':
+        navigate(`/interactive/chemical-reaction/${formattedTitle}`);
+        break;
+      default:
+        navigate(`/module-interactive/${formattedTitle}?type=${type}`);
+    }
   };
 
   return (
@@ -107,6 +126,7 @@ export const ModuleShowcase = () => {
                           </Button>
                         </div>
                       </div>
+                      
                       <div className="relative aspect-video p-4 flex items-center justify-center bg-white">
                         <div className={cn(
                           "relative transition-transform", 
@@ -115,7 +135,6 @@ export const ModuleShowcase = () => {
                         )} 
                         style={{ transform: `scale(${zoom})` }}
                         >
-                          {/* Simple Water Molecule Visualization */}
                           <div className="absolute w-10 h-10 bg-red-500 rounded-full top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
                             <span className="absolute inset-0 flex items-center justify-center text-white font-bold cursor-pointer"
                               onClick={() => handleElementClick('O')}
@@ -213,28 +232,34 @@ export const ModuleShowcase = () => {
                     </ul>
 
                     <div className="mt-6 p-4 bg-chemistry-soft-purple rounded-lg">
-                      <h4 className="font-medium text-chemistry-purple mb-2">Try it yourself!</h4>
-                      <p className="text-sm text-gray-700 mb-3">
-                        In the interactive preview, you can:
+                      <h4 className="font-medium text-chemistry-purple mb-2">Explore Interactive Examples</h4>
+                      <p className="text-sm text-gray-700 mb-4">
+                        Click to experience our interactive learning tools:
                       </p>
-                      <ul className="text-sm space-y-2">
-                        <li className="flex items-center">
-                          <span className="bg-chemistry-purple text-white rounded-full w-5 h-5 inline-flex items-center justify-center mr-2">1</span>
-                          <span>Click the rotation button to see the molecule spin</span>
-                        </li>
-                        <li className="flex items-center">
-                          <span className="bg-chemistry-purple text-white rounded-full w-5 h-5 inline-flex items-center justify-center mr-2">2</span>
-                          <span>Use the zoom buttons to get a closer look</span>
-                        </li>
-                        <li className="flex items-center">
-                          <span className="bg-chemistry-purple text-white rounded-full w-5 h-5 inline-flex items-center justify-center mr-2">3</span>
-                          <span>Click on any atom to see detailed information</span>
-                        </li>
-                        <li className="flex items-center">
-                          <span className="bg-chemistry-purple text-white rounded-full w-5 h-5 inline-flex items-center justify-center mr-2">4</span>
-                          <span>Expand the "More about Water Molecule" section</span>
-                        </li>
-                      </ul>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <Button 
+                          variant="outline" 
+                          className="border-chemistry-purple text-chemistry-purple hover:bg-chemistry-soft-purple"
+                          onClick={() => navigateToInteractive('molecule', '3D Molecule Explorer')}
+                        >
+                          3D Molecule
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          className="border-chemistry-purple text-chemistry-purple hover:bg-chemistry-soft-purple"
+                          onClick={() => navigateToInteractive('periodic-table', 'Periodic Table')}
+                        >
+                          Periodic Table
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          className="border-chemistry-purple text-chemistry-purple hover:bg-chemistry-soft-purple"
+                          onClick={() => navigateToInteractive('chemical-reaction', 'Chemical Reaction')}
+                        >
+                          Chemical Reaction
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
