@@ -1,3 +1,4 @@
+
 import { supabase, isSupabaseConfigured } from './supabase';
 import { Database } from '@/integrations/supabase/types';
 
@@ -115,7 +116,7 @@ const isUserAuthenticated = () => {
   return supabase.auth.getSession().then(({ data }) => !!data.session);
 };
 
-// User courses
+// User courses - Modified to use courses table and transform data
 export const getUserCourses = async () => {
   // If Supabase is not configured, return mock data
   if (!isSupabaseConfigured) {
@@ -131,17 +132,93 @@ export const getUserCourses = async () => {
   }
 
   try {
-    const { data, error } = await supabase
-      .from('user_courses')
-      .select('*')
-      .order('last_accessed', { ascending: false });
+    // Get the current user
+    const { data: sessionData } = await supabase.auth.getSession();
+    const userId = sessionData.session?.user.id;
 
-    if (error) {
-      console.error('Error fetching user courses:', error);
-      throw error;
+    // Get all courses
+    const { data: courses, error: coursesError } = await supabase
+      .from('courses')
+      .select('*');
+
+    if (coursesError) {
+      console.error('Error fetching courses:', coursesError);
+      throw coursesError;
     }
 
-    return data as UserCourse[];
+    // Get user's progress for all modules
+    const { data: userProgress, error: progressError } = await supabase
+      .from('user_module_progress')
+      .select('*')
+      .eq('user_id', userId);
+
+    if (progressError) {
+      console.error('Error fetching user progress:', progressError);
+      throw progressError;
+    }
+
+    // Get all modules
+    const { data: modules, error: modulesError } = await supabase
+      .from('modules')
+      .select('*');
+
+    if (modulesError) {
+      console.error('Error fetching modules:', modulesError);
+      throw modulesError;
+    }
+
+    // Transform the data into UserCourse objects
+    const userCourses: UserCourse[] = courses.map(course => {
+      // Find modules for this course
+      const courseModules = modules.filter(module => module.course_id === course.id);
+      
+      // Find user progress for modules in this course
+      const courseProgress = userProgress.filter(progress => 
+        courseModules.some(module => module.id === progress.module_id)
+      );
+      
+      // Calculate completed modules
+      const modulesCompleted = courseProgress.filter(progress => progress.completed).length;
+      
+      // Calculate overall progress percentage
+      const progressPercentage = courseModules.length > 0
+        ? Math.round((modulesCompleted / courseModules.length) * 100)
+        : 0;
+      
+      // Find the next incomplete module
+      const nextIncompleteModule = courseModules
+        .sort((a, b) => a.order_index - b.order_index)
+        .find(module => 
+          !courseProgress.some(progress => 
+            progress.module_id === module.id && progress.completed
+          )
+        );
+      
+      // Find the most recently accessed module
+      const lastAccessed = courseProgress.length > 0
+        ? courseProgress.reduce((latest, current) => {
+            if (!latest.last_accessed) return current;
+            if (!current.last_accessed) return latest;
+            return new Date(current.last_accessed) > new Date(latest.last_accessed)
+              ? current
+              : latest;
+          }).last_accessed || new Date().toISOString()
+        : new Date().toISOString();
+
+      return {
+        id: course.id,
+        title: course.title,
+        progress: progressPercentage,
+        last_accessed: lastAccessed,
+        modules_completed: modulesCompleted,
+        modules_total: courseModules.length,
+        next_module: nextIncompleteModule ? nextIncompleteModule.title : "Course Completed",
+        course_icon: course.icon,
+        color_class: course.color_class,
+      };
+    });
+
+    return userCourses;
   } catch (error) {
     console.error('Exception in getUserCourses:', error);
     return mockUserCourses;
