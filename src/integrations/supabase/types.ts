@@ -9,7 +9,142 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      courses: {
+        Row: {
+          color_class: string
+          created_at: string | null
+          description: string
+          estimated_hours: number
+          icon: string
+          id: string
+          level: string
+          thumbnail_url: string | null
+          title: string
+          total_modules: number
+          updated_at: string | null
+        }
+        Insert: {
+          color_class: string
+          created_at?: string | null
+          description: string
+          estimated_hours: number
+          icon: string
+          id: string
+          level: string
+          thumbnail_url?: string | null
+          title: string
+          total_modules: number
+          updated_at?: string | null
+        }
+        Update: {
+          color_class?: string
+          created_at?: string | null
+          description?: string
+          estimated_hours?: number
+          icon?: string
+          id?: string
+          level?: string
+          thumbnail_url?: string | null
+          title?: string
+          total_modules?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      modules: {
+        Row: {
+          content: Json
+          course_id: string
+          created_at: string | null
+          description: string
+          estimated_minutes: number
+          id: string
+          order_index: number
+          points: number
+          title: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          content: Json
+          course_id: string
+          created_at?: string | null
+          description: string
+          estimated_minutes: number
+          id: string
+          order_index: number
+          points?: number
+          title: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          content?: Json
+          course_id?: string
+          created_at?: string | null
+          description?: string
+          estimated_minutes?: number
+          id?: string
+          order_index?: number
+          points?: number
+          title?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "modules_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_module_progress: {
+        Row: {
+          completed: boolean | null
+          created_at: string | null
+          id: string
+          last_accessed: string | null
+          module_id: string
+          progress: number | null
+          score: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string | null
+          id?: string
+          last_accessed?: string | null
+          module_id: string
+          progress?: number | null
+          score?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string | null
+          id?: string
+          last_accessed?: string | null
+          module_id?: string
+          progress?: number | null
+          score?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_module_progress_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

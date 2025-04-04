@@ -11,6 +11,8 @@ import { checkSupabaseConfiguration } from "@/lib/supabase";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import CoursesPage from "./pages/CoursesPage";
+import CourseDetailPage from "./pages/CourseDetailPage";
+import ModuleDetailPage from "./pages/ModuleDetailPage";
 import DashboardPage from "./pages/DashboardPage";
 import AboutPage from "./pages/AboutPage";
 import AuthPage from "./pages/AuthPage";
@@ -49,6 +51,17 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/courses" element={<CoursesPage />} />
+              <Route path="/course/:courseId" element={<CourseDetailPage />} />
+              <Route path="/course/:courseId/module/:moduleId" element={
+                <ProtectedRoute>
+                  <ModuleDetailPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/module/:moduleId" element={
+                <ProtectedRoute>
+                  <ModuleDetailPage />
+                </ProtectedRoute>
+              } />
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <DashboardPage />
