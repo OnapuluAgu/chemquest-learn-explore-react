@@ -72,17 +72,17 @@ const App = () => {
               {/* Specific interactive type routes with better URL patterns */}
               <Route path="/interactive/molecule/:interactiveId" element={
                 <ProtectedRoute>
-                  <ModuleInteractivePage type="molecule" />
+                  <ModuleInteractivePage interactiveType="molecule" />
                 </ProtectedRoute>
               } />
               <Route path="/interactive/periodic-table/:interactiveId" element={
                 <ProtectedRoute>
-                  <ModuleInteractivePage type="periodic-table" />
+                  <ModuleInteractivePage interactiveType="periodic-table" />
                 </ProtectedRoute>
               } />
               <Route path="/interactive/chemical-reaction/:interactiveId" element={
                 <ProtectedRoute>
-                  <ModuleInteractivePage type="chemical-reaction" />
+                  <ModuleInteractivePage interactiveType="chemical-reaction" />
                 </ProtectedRoute>
               } />
               <Route path="/dashboard" element={
