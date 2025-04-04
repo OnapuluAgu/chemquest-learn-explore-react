@@ -1,4 +1,6 @@
+
 import { supabase, isSupabaseConfigured } from './supabase';
+import { Database } from '@/integrations/supabase/types';
 
 // Types for our data
 export type UserCourse = {
@@ -220,10 +222,10 @@ export const getUserActivities = async () => {
 // New functions to fetch data from our new tables
 export const getCourses = async () => {
   try {
+    // Using proper typings with the "from" method
     const { data, error } = await supabase
       .from('courses')
-      .select('*')
-      .order('id');
+      .select();
 
     if (error) {
       console.error('Error fetching courses:', error);
@@ -241,7 +243,7 @@ export const getCourseById = async (courseId: string) => {
   try {
     const { data, error } = await supabase
       .from('courses')
-      .select('*')
+      .select()
       .eq('id', courseId)
       .single();
 
@@ -261,7 +263,7 @@ export const getModulesByCourseId = async (courseId: string) => {
   try {
     const { data, error } = await supabase
       .from('modules')
-      .select('*')
+      .select()
       .eq('course_id', courseId)
       .order('order_index');
 
@@ -281,7 +283,7 @@ export const getModuleById = async (moduleId: string) => {
   try {
     const { data, error } = await supabase
       .from('modules')
-      .select('*')
+      .select()
       .eq('id', moduleId)
       .single();
 
@@ -308,7 +310,7 @@ export const getUserModuleProgress = async (moduleId: string) => {
     
     const { data, error } = await supabase
       .from('user_module_progress')
-      .select('*')
+      .select()
       .eq('user_id', userId)
       .eq('module_id', moduleId)
       .maybeSingle();
