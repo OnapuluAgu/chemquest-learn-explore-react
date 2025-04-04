@@ -13,6 +13,7 @@ import NotFound from "./pages/NotFound";
 import CoursesPage from "./pages/CoursesPage";
 import CourseDetailPage from "./pages/CourseDetailPage";
 import ModuleDetailPage from "./pages/ModuleDetailPage";
+import ModuleInteractivePage from "./pages/ModuleInteractivePage";
 import DashboardPage from "./pages/DashboardPage";
 import AboutPage from "./pages/AboutPage";
 import AuthPage from "./pages/AuthPage";
@@ -60,6 +61,11 @@ const App = () => {
               <Route path="/module/:moduleId" element={
                 <ProtectedRoute>
                   <ModuleDetailPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/module-interactive/:interactiveId" element={
+                <ProtectedRoute>
+                  <ModuleInteractivePage />
                 </ProtectedRoute>
               } />
               <Route path="/dashboard" element={

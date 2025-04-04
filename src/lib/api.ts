@@ -1,4 +1,3 @@
-
 import { supabase, isSupabaseConfigured } from './supabase';
 import { Database } from '@/integrations/supabase/types';
 
@@ -132,8 +131,7 @@ export const getUserCourses = async () => {
   }
 
   try {
-    // Use type assertion to work around TypeScript constraints
-    const { data: userCourses, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('user_courses')
       .select('*')
       .order('last_accessed', { ascending: false });
@@ -143,7 +141,7 @@ export const getUserCourses = async () => {
       throw error;
     }
 
-    return userCourses as UserCourse[];
+    return data as UserCourse[];
   } catch (error) {
     console.error('Exception in getUserCourses:', error);
     return mockUserCourses;
@@ -222,7 +220,6 @@ export const getUserActivities = async () => {
 // New functions to fetch data from our new tables
 export const getCourses = async () => {
   try {
-    // Using proper typings with the "from" method
     const { data, error } = await supabase
       .from('courses')
       .select();
@@ -352,15 +349,17 @@ export const updateUserModuleProgress = async (
 
     if (existingRecord) {
       // Update existing record
+      const updateData = {
+        progress,
+        completed,
+        score: score !== null ? score : undefined,
+        last_accessed: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
       const { data, error } = await supabase
         .from('user_module_progress')
-        .update({
-          progress,
-          completed,
-          score: score !== null ? score : undefined,
-          last_accessed: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', existingRecord.id)
         .select()
         .single();
@@ -373,16 +372,18 @@ export const updateUserModuleProgress = async (
       return data as UserModuleProgress;
     } else {
       // Insert new record
+      const insertData = {
+        user_id: userId,
+        module_id: moduleId,
+        progress,
+        completed,
+        score,
+        last_accessed: new Date().toISOString()
+      };
+
       const { data, error } = await supabase
         .from('user_module_progress')
-        .insert({
-          user_id: userId,
-          module_id: moduleId,
-          progress,
-          completed,
-          score,
-          last_accessed: new Date().toISOString()
-        })
+        .insert(insertData)
         .select()
         .single();
 
