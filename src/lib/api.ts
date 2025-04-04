@@ -90,7 +90,8 @@ export const getUserCourses = async () => {
   }
 
   try {
-    const { data: userCourses, error } = await supabase
+    // Use type assertion to work around TypeScript constraints
+    const { data: userCourses, error } = await (supabase as any)
       .from('user_courses')
       .select('*')
       .order('last_accessed', { ascending: false });
@@ -123,7 +124,8 @@ export const getUserAchievements = async () => {
   }
 
   try {
-    const { data: achievements, error } = await supabase
+    // Use type assertion to work around TypeScript constraints
+    const { data: achievements, error } = await (supabase as any)
       .from('user_achievements')
       .select('*')
       .order('achieved', { ascending: false });
@@ -156,7 +158,8 @@ export const getUserActivities = async () => {
   }
 
   try {
-    const { data: activities, error } = await supabase
+    // Use type assertion to work around TypeScript constraints
+    const { data: activities, error } = await (supabase as any)
       .from('user_activities')
       .select('*')
       .order('created_at', { ascending: false })
