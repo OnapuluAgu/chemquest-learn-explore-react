@@ -42,10 +42,15 @@ const elementsData = [
   { symbol: 'Cu', name: 'Copper', atomicNumber: 29, category: 'transition-metal', color: 'bg-blue-200', atomicWeight: '63.546', electronConfig: '[Ar] 3d¹⁰ 4s¹', state: 'solid', group: 11, period: 4, density: '8.96 g/cm³', meltingPoint: '1085°C', boilingPoint: '2562°C', discovered: 'Prehistoric', uses: ['Electrical wiring', 'Plumbing', 'Coins'], funFact: 'Copper was one of the first metals used by humans and gave its name to the Copper Age.' },
 ];
 
-const ModuleInteractivePage = () => {
+// Define the props interface for our component
+interface ModuleInteractivePageProps {
+  interactiveType?: 'molecule' | 'periodic-table' | 'chemical-reaction';
+}
+
+const ModuleInteractivePage = ({ interactiveType }: ModuleInteractivePageProps) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const type = searchParams.get('type') || 'molecule';
+  const type = interactiveType || searchParams.get('type') || 'molecule';
   const moduleId = searchParams.get('moduleId');
   
   // State for interactive elements
