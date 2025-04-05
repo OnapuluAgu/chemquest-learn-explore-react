@@ -1,5 +1,4 @@
-
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
@@ -9,11 +8,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/components/ui/use-toast";
-import { getModuleById, getCourseById, updateUserModuleProgress } from "@/lib/api";
+import { getModuleById, getCourseById } from "@/lib/api";
+import { useModuleProgress } from "@/hooks/useModuleProgress";
 
 const ModuleDetailPage = () => {
   const { moduleId } = useParams<{ moduleId: string }>();
-  const [currentProgress, setCurrentProgress] = useState(0);
   const navigate = useNavigate();
   
   if (!moduleId) {
@@ -38,43 +37,18 @@ const ModuleDetailPage = () => {
     enabled: !!module?.course_id
   });
 
-  useEffect(() => {
-    if (module) {
-      // Update progress when first viewing the module (10%)
-      const initialProgress = 10;
-      updateUserModuleProgress(moduleId, initialProgress)
-        .then(result => {
-          if (result) {
-            setCurrentProgress(result.progress || initialProgress);
-          }
-        })
-        .catch(error => {
-          console.error("Error updating initial progress:", error);
-        });
-    }
-  }, [module, moduleId]);
+  const { 
+    currentProgress, 
+    updateProgress,
+    isLoading: isLoadingProgress 
+  } = useModuleProgress(moduleId);
 
-  const updateProgress = (newProgress: number) => {
-    setCurrentProgress(newProgress);
-    updateUserModuleProgress(moduleId, newProgress)
-      .then(() => {
-        if (newProgress >= 100) {
-          toast({
-            title: "Module Completed!",
-            description: "You've successfully completed this module.",
-            variant: "default",
-          });
-        }
-      })
-      .catch(error => {
-        console.error("Error updating progress:", error);
-        toast({
-          title: "Error Updating Progress",
-          description: "There was a problem updating your progress.",
-          variant: "destructive",
-        });
-      });
-  };
+  useEffect(() => {
+    if (module && currentProgress === 0) {
+      const initialProgress = 10;
+      updateProgress(initialProgress);
+    }
+  }, [module, currentProgress, updateProgress]);
 
   const renderModuleIcon = () => {
     switch (module?.type) {
@@ -89,15 +63,12 @@ const ModuleDetailPage = () => {
   };
 
   const navigateToInteractive = (title: string, contentType: string) => {
-    // Use title in URL for better SEO and readability
     const urlTitle = title.toLowerCase().replace(/\s+/g, '-');
     
-    // Increment progress when viewing interactive content
     const progressIncrement = 15;
     const newProgress = Math.min(currentProgress + progressIncrement, 100);
     updateProgress(newProgress);
     
-    // Navigate to the interactive module showcase with the specific content type
     navigate(`/module-interactive/${urlTitle}?type=${contentType}&moduleId=${moduleId}`);
   };
 
@@ -114,7 +85,6 @@ const ModuleDetailPage = () => {
                 <CardContent className="p-6">
                   <h3 className="text-xl font-semibold mb-3">{section.title}</h3>
                   
-                  {/* Determine if this is an "Interactive Example" section */}
                   {section.title.toLowerCase().includes("interactive") ? (
                     <div className="flex flex-col md:flex-row gap-6">
                       {section.image_url && (
@@ -156,7 +126,6 @@ const ModuleDetailPage = () => {
                       </div>
                     </div>
                   ) : section.title.toLowerCase().includes("real-life") ? (
-                    // Enhanced Real-Life Application section with better visual breakdown
                     <div className="space-y-4">
                       {section.image_url && (
                         <div className="rounded-md overflow-hidden bg-gray-100">
@@ -175,7 +144,6 @@ const ModuleDetailPage = () => {
                         <h4 className="font-medium text-chemistry-purple mb-2">Why This Matters</h4>
                         <p className="text-gray-700 text-sm leading-relaxed mb-4">{section.content}</p>
                         
-                        {/* Break down real-life examples into more engaging visual pieces */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                           <div className="bg-white p-3 rounded-md shadow-sm">
                             <h5 className="text-sm font-medium mb-2">In Your Daily Life</h5>
@@ -212,7 +180,6 @@ const ModuleDetailPage = () => {
                       </div>
                     </div>
                   ) : (
-                    // Regular content section
                     <div className="flex flex-col md:flex-row gap-6">
                       {section.image_url && (
                         <div className="md:w-1/3">
@@ -255,12 +222,10 @@ const ModuleDetailPage = () => {
                                 optionIndex === item.correct_index ? "border-green-300 hover:bg-green-50" : ""
                               }`}
                               onClick={() => {
-                                // Increment progress for answering a question
                                 const progressIncrement = 20;
                                 const newProgress = Math.min(currentProgress + progressIncrement, 100);
                                 updateProgress(newProgress);
                                 
-                                // Show correct answer feedback
                                 if (optionIndex === item.correct_index) {
                                   toast({
                                     title: "Correct!",
@@ -297,7 +262,6 @@ const ModuleDetailPage = () => {
               <Button 
                 className="bg-chemistry-purple hover:bg-chemistry-blue"
                 onClick={() => {
-                  // Mark as 100% complete when explicitly clicking complete
                   updateProgress(100);
                 }}
               >
@@ -355,7 +319,6 @@ const ModuleDetailPage = () => {
                   <Button
                     className="bg-chemistry-purple hover:bg-chemistry-blue"
                     onClick={() => {
-                      // Increment progress for completing the lab section
                       const newProgress = Math.min(currentProgress + 50, 100);
                       updateProgress(newProgress);
                       
@@ -382,7 +345,6 @@ const ModuleDetailPage = () => {
               <Button 
                 className="bg-chemistry-purple hover:bg-chemistry-blue"
                 onClick={() => {
-                  // Mark as 100% complete when explicitly clicking complete
                   updateProgress(100);
                 }}
               >
@@ -419,17 +381,14 @@ const ModuleDetailPage = () => {
                             key={optionIndex}
                             className="p-3 border rounded-md cursor-pointer hover:bg-gray-50"
                             onClick={() => {
-                              // Calculate progress based on question completion
                               const totalQuestions = quiz.questions.length;
                               const progressPerQuestion = 100 / totalQuestions;
                               
-                              // We'll set progress based on questions answered
                               const progressForThisQuestion = (index + 1) * progressPerQuestion;
                               const newProgress = Math.min(progressForThisQuestion, 100);
                               
                               updateProgress(newProgress);
                               
-                              // Show the result toast
                               if (optionIndex === question.correct_index) {
                                 toast({
                                   title: "Correct!",
@@ -457,7 +416,6 @@ const ModuleDetailPage = () => {
                   <Button
                     className="bg-chemistry-purple hover:bg-chemistry-blue"
                     onClick={() => {
-                      // Mark as complete
                       updateProgress(100);
                       
                       toast({
@@ -489,8 +447,7 @@ const ModuleDetailPage = () => {
     }
   };
 
-  // Show loading state
-  if (isLoadingModule || isLoadingCourse) {
+  if (isLoadingModule || isLoadingCourse || isLoadingProgress) {
     return (
       <Layout>
         <div className="container mx-auto px-6 py-12 flex justify-center items-center min-h-[60vh]">
@@ -500,7 +457,6 @@ const ModuleDetailPage = () => {
     );
   }
 
-  // Show error state if no module found
   if (!module) {
     return (
       <Layout>
