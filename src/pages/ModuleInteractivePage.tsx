@@ -1,9 +1,8 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
-import { ArrowLeft, ExternalLink, Download, Share2, Info, Table2, Flask, Atom } from "lucide-react";
+import { ArrowLeft, ExternalLink, Download, Share2, Info, Table2, Beaker, Atom } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -23,39 +22,26 @@ const ModuleInteractivePage = ({ interactiveType: propType }: InteractiveProps) 
   const urlType = searchParams.get("type") || "";
   const moduleId = searchParams.get("moduleId") || "";
   
-  // Determine the interactive type by checking different sources
   const determineInteractiveType = () => {
-    // If explicitly provided as a prop, use that
     if (propType) return propType;
-    
-    // If in URL parameters, use that
     if (urlType) {
-      // Handle different possible formats in URL
       if (urlType.includes("molecule")) return "molecule";
       if (urlType.includes("periodic") || urlType.includes("table")) return "periodic-table";
       if (urlType.includes("chemical") || urlType.includes("reaction")) return "chemical-reaction";
     }
-    
-    // Check the path for hints
     const path = window.location.pathname.toLowerCase();
     if (path.includes("molecule")) return "molecule";
     if (path.includes("periodic") || path.includes("table")) return "periodic-table";
     if (path.includes("chemical") || path.includes("reaction")) return "chemical-reaction";
-    
-    // Default fallback
     return "molecule";
   };
   
-  // Set the interactive type based on our determination function
   const [interactiveType, setInteractiveType] = useState(determineInteractiveType());
   
-  // Use our progress hook to track and update progress
   const { currentProgress, updateProgress } = useModuleProgress(moduleId);
   
-  // Dialog for information
   const [infoDialogOpen, setInfoDialogOpen] = useState(false);
   
-  // Fetch module data if moduleId exists
   const { 
     data: module,
     isLoading: isLoadingModule 
@@ -65,16 +51,13 @@ const ModuleInteractivePage = ({ interactiveType: propType }: InteractiveProps) 
     enabled: !!moduleId
   });
   
-  // Update progress when the interactive content is viewed
   useEffect(() => {
     if (moduleId) {
-      // Viewing an interactive module is worth 25% progress
       const newProgress = Math.min(currentProgress + 25, 100);
       updateProgress(newProgress);
     }
   }, [moduleId, interactiveType]);
   
-  // Log the component mounting and its type
   useEffect(() => {
     console.log("ModuleInteractivePage rendered with type:", interactiveType);
     console.log("Path:", window.location.pathname);
@@ -82,7 +65,6 @@ const ModuleInteractivePage = ({ interactiveType: propType }: InteractiveProps) 
     console.log("Prop type:", propType);
   }, [interactiveType, urlType, propType]);
   
-  // Handle type switching
   const handleTypeChange = (newType: string) => {
     let mappedType: "molecule" | "periodic-table" | "chemical-reaction" = "molecule";
     
@@ -96,7 +78,6 @@ const ModuleInteractivePage = ({ interactiveType: propType }: InteractiveProps) 
     console.log("Type changed to:", mappedType);
   };
   
-  // Render different content based on interactive type
   const renderInteractiveContent = () => {
     console.log("Rendering content for:", interactiveType);
     
@@ -129,7 +110,7 @@ const ModuleInteractivePage = ({ interactiveType: propType }: InteractiveProps) 
                 <Table2 className="h-16 w-16 mx-auto text-chemistry-blue mb-4" />
                 <h3 className="text-lg font-medium mb-2">Periodic Table Explorer</h3>
                 <p className="text-gray-600 max-w-md mx-auto mb-4">
-                  Explore elements, their properties, and relationships in the periodic table of elements.
+                  Explore elements, their properties, and relationship patterns across the periodic table of elements.
                 </p>
                 <Button className="bg-chemistry-blue">
                   Explore Elements
@@ -137,7 +118,6 @@ const ModuleInteractivePage = ({ interactiveType: propType }: InteractiveProps) 
               </div>
             </div>
             
-            {/* Example periodic table grid */}
             <div className="mt-6 grid grid-cols-8 gap-1">
               {[...Array(16)].map((_, i) => (
                 <div key={i} className="aspect-square bg-chemistry-soft-purple rounded flex items-center justify-center">
@@ -195,7 +175,6 @@ const ModuleInteractivePage = ({ interactiveType: propType }: InteractiveProps) 
     }
   };
 
-  // Dialog content for information
   const renderInfoDialog = () => (
     <Dialog open={infoDialogOpen} onOpenChange={setInfoDialogOpen}>
       <DialogContent>
@@ -328,7 +307,7 @@ const ModuleInteractivePage = ({ interactiveType: propType }: InteractiveProps) 
                     className={`w-full justify-start ${interactiveType === "chemical-reaction" ? "bg-chemistry-purple" : ""}`}
                     onClick={() => handleTypeChange("chemical-reaction")}
                   >
-                    <Flask className="h-4 w-4 mr-2" /> Chemical Reaction
+                    <Beaker className="h-4 w-4 mr-2" /> Chemical Reaction
                   </Button>
                 </div>
               </CardContent>
