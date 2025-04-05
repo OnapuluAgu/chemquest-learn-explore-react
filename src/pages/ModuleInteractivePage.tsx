@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Layout } from "@/components/Layout";
@@ -486,3 +487,323 @@ const ModuleInteractivePage = ({ interactiveType }: ModuleInteractivePageProps) 
                                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                     <div className="bg-white p-3 rounded shadow-sm">
                                       <p className="text-xs text-gray-500">Atomic Weight</p>
+                                      <p className="font-medium">{element.atomicWeight}</p>
+                                    </div>
+                                    <div className="bg-white p-3 rounded shadow-sm">
+                                      <p className="text-xs text-gray-500">State at Room Temp</p>
+                                      <p className="font-medium capitalize">{element.state}</p>
+                                    </div>
+                                    <div className="bg-white p-3 rounded shadow-sm">
+                                      <p className="text-xs text-gray-500">Electron Configuration</p>
+                                      <p className="font-medium">{element.electronConfig}</p>
+                                    </div>
+                                    <div className="bg-white p-3 rounded shadow-sm">
+                                      <p className="text-xs text-gray-500">Density</p>
+                                      <p className="font-medium">{element.density}</p>
+                                    </div>
+                                    <div className="bg-white p-3 rounded shadow-sm">
+                                      <p className="text-xs text-gray-500">Melting Point</p>
+                                      <p className="font-medium">{element.meltingPoint}</p>
+                                    </div>
+                                    <div className="bg-white p-3 rounded shadow-sm">
+                                      <p className="text-xs text-gray-500">Boiling Point</p>
+                                      <p className="font-medium">{element.boilingPoint}</p>
+                                    </div>
+                                  </div>
+                                </TabsContent>
+                                
+                                <TabsContent value="applications" className="bg-gray-50 p-4 rounded-md mt-2">
+                                  <h4 className="font-medium text-sm mb-3">Common Applications & Uses</h4>
+                                  <ul className="list-disc list-inside space-y-2">
+                                    {element.uses && element.uses.map((use, index) => (
+                                      <li key={index} className="text-sm">{use}</li>
+                                    ))}
+                                  </ul>
+                                  <div className="mt-4 bg-blue-50 p-3 rounded text-sm">
+                                    <p className="font-medium">Industry Significance</p>
+                                    <p className="mt-1">
+                                      {element.name} is widely used in various industries due to its unique properties.
+                                    </p>
+                                  </div>
+                                </TabsContent>
+                                
+                                <TabsContent value="history" className="bg-gray-50 p-4 rounded-md mt-2">
+                                  <h4 className="font-medium text-sm mb-3">Historical Background</h4>
+                                  <div className="space-y-3 text-sm">
+                                    <div className="flex gap-2">
+                                      <div className="bg-chemistry-soft-purple p-2 rounded-full h-8 w-8 flex items-center justify-center shrink-0">
+                                        <BookOpen className="h-4 w-4" />
+                                      </div>
+                                      <div>
+                                        <p className="font-medium">Discovery</p>
+                                        <p>Discovered in {element.discovered} {element.discovered !== 'Prehistoric' ? 'by scientists' : 'and used by ancient civilizations'}.</p>
+                                      </div>
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <div className="bg-chemistry-soft-purple p-2 rounded-full h-8 w-8 flex items-center justify-center shrink-0">
+                                        <Database className="h-4 w-4" />
+                                      </div>
+                                      <div>
+                                        <p className="font-medium">Etymology</p>
+                                        <p>The name {element.name} comes from {element.name === 'Iron' ? 'the Anglo-Saxon word "isern"' : element.name === 'Copper' ? 'the Latin "cuprum"' : 'its historical origins'}.</p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </TabsContent>
+                                
+                                <TabsContent value="visuals" className="bg-gray-50 p-4 rounded-md mt-2">
+                                  <h4 className="font-medium text-sm mb-3">Visual Representation</h4>
+                                  <div className="flex flex-col md:flex-row gap-4">
+                                    <div className="bg-white p-4 rounded shadow-sm flex-1">
+                                      <p className="text-xs text-gray-500 mb-2">Atomic Structure</p>
+                                      <div className="aspect-square flex items-center justify-center relative border rounded-full">
+                                        <div className="h-8 w-8 rounded-full bg-chemistry-purple flex items-center justify-center text-white font-bold">
+                                          {element.symbol}
+                                        </div>
+                                        <div className="absolute inset-0 border border-dashed rounded-full animate-ping-slow opacity-50"></div>
+                                      </div>
+                                    </div>
+                                    <div className="bg-white p-4 rounded shadow-sm flex-1">
+                                      <p className="text-xs text-gray-500 mb-2">Element Appearance</p>
+                                      <div className="aspect-square bg-gradient-to-br from-gray-100 to-gray-300 rounded flex items-center justify-center text-lg font-bold">
+                                        {element.state === 'gas' ? 'Gas' : element.state === 'liquid' ? 'Liquid' : 'Solid'}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </TabsContent>
+                              </Tabs>
+                            </>
+                          );
+                        })()}
+                      </DialogContent>
+                    </Dialog>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+        
+      case 'chemical-reaction':
+        return (
+          <Card>
+            <CardContent className="p-6">
+              <div className="bg-gray-100 rounded-lg overflow-hidden">
+                <div className="bg-chemistry-purple text-white px-4 py-2 flex justify-between items-center">
+                  <span className="font-medium">Chemical Reaction Simulator</span>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-8 w-8 p-0 text-white" 
+                    onClick={() => setReactionStarted(!reactionStarted)}
+                    disabled={reactionProgress === 100}
+                  >
+                    <Play className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="p-6 bg-white">
+                  <h3 className="font-medium text-center mb-4">Hydrogen + Oxygen → Water</h3>
+                  <div className="flex items-center justify-between max-w-lg mx-auto">
+                    <div className="text-center">
+                      <div className="flex gap-1 mb-2">
+                        <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">H</div>
+                        <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">H</div>
+                      </div>
+                      <div className="text-xs">Hydrogen (H₂)</div>
+                    </div>
+                    
+                    <div className="text-2xl font-bold">+</div>
+                    
+                    <div className="text-center">
+                      <div className="flex gap-1 mb-2">
+                        <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center text-white font-bold">O</div>
+                        <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center text-white font-bold">O</div>
+                      </div>
+                      <div className="text-xs">Oxygen (O₂)</div>
+                    </div>
+                    
+                    <div className="text-2xl font-bold">→</div>
+                    
+                    <div className="text-center">
+                      <div className="flex gap-1 mb-2">
+                        <div className="relative w-12 h-16">
+                          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-10 h-10 rounded-full bg-red-500 flex items-center justify-center text-white font-bold">O</div>
+                          <div className="absolute bottom-0 left-0 w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">H</div>
+                          <div className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">H</div>
+                        </div>
+                      </div>
+                      <div className="text-xs">Water (H₂O)</div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6">
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Reaction Progress</span>
+                      <span>{reactionProgress}%</span>
+                    </div>
+                    <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-chemistry-purple transition-all duration-300 ease-out"
+                        style={{ width: `${reactionProgress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 text-sm">
+                    <p className="font-medium">Reaction Details:</p>
+                    <p className="mt-1">2 H₂ + O₂ → 2 H₂O</p>
+                    <p className="mt-1">This is an exothermic reaction, meaning it releases energy in the form of heat.</p>
+                    
+                    {reactionProgress > 30 && (
+                      <div className="mt-3 p-2 bg-yellow-50 rounded text-xs animate-fade-in">
+                        <p className="font-medium">Observation:</p>
+                        <p>The molecules are colliding and forming new bonds!</p>
+                      </div>
+                    )}
+                    
+                    {reactionProgress > 70 && (
+                      <div className="mt-3 p-2 bg-blue-50 rounded text-xs animate-fade-in">
+                        <p className="font-medium">Result:</p>
+                        <p>Water molecules are forming as hydrogen and oxygen atoms rearrange.</p>
+                      </div>
+                    )}
+                    
+                    {reactionProgress === 100 && (
+                      <div className="mt-3 p-2 bg-green-50 rounded text-xs animate-fade-in">
+                        <p className="font-medium">Reaction Complete!</p>
+                        <p>The hydrogen and oxygen have fully combined to form water.</p>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="mt-2"
+                          onClick={() => {
+                            setReactionProgress(0);
+                            setReactionStarted(false);
+                          }}
+                        >
+                          Reset Reaction
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-4 bg-gray-100 p-3 rounded-lg">
+                <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+                  <CollapsibleTrigger className="flex w-full justify-between items-center text-sm font-medium">
+                    <span>More about this Reaction</span>
+                    <div className={`transform transition-transform ${isOpen ? 'rotate-180' : ''}`}>
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3.5 5.25L7 8.75L10.5 5.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="text-sm mt-2">
+                    <p>The reaction between hydrogen and oxygen to form water is a fundamental chemical reaction in chemistry.</p>
+                    <p className="mt-2">This reaction releases a large amount of energy and is the same reaction that powers hydrogen fuel cells.</p>
+                    <p className="mt-2">When hydrogen and oxygen combine rapidly with a spark, the reaction can be explosive - this is why the Hindenburg airship disaster was so devastating.</p>
+                  </CollapsibleContent>
+                </Collapsible>
+              </div>
+              
+              <div className="mt-6">
+                <h4 className="font-medium mb-2">Real-World Applications</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-3 rounded-md bg-chemistry-soft-purple text-sm">
+                    <div className="flex gap-2 items-start">
+                      <div className="p-2 rounded-full bg-white">
+                        <Beaker className="h-4 w-4 text-chemistry-purple" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Hydrogen Fuel Cells</p>
+                        <p className="mt-1">These devices use the reaction between hydrogen and oxygen to generate electricity, with water as the only byproduct.</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-md bg-blue-50 text-sm">
+                    <div className="flex gap-2 items-start">
+                      <div className="p-2 rounded-full bg-white">
+                        <Microscope className="h-4 w-4 text-blue-700" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Water Synthesis</p>
+                        <p className="mt-1">This reaction is used in laboratory settings to produce highly pure water for experiments and research.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+        
+      default:
+        return (
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-center py-12">
+                <h3 className="text-xl font-semibold mb-2">Interactive Example</h3>
+                <p className="text-gray-500 mb-6">Select a specific interactive example type to explore.</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
+                  <Button
+                    variant="outline"
+                    className="h-auto p-4 flex flex-col items-center gap-2"
+                    onClick={() => navigate('/molecule/example')}
+                  >
+                    <div className="w-10 h-10 rounded-full bg-chemistry-soft-purple flex items-center justify-center">
+                      <Beaker className="h-5 w-5 text-chemistry-purple" />
+                    </div>
+                    <span>3D Molecule</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-auto p-4 flex flex-col items-center gap-2"
+                    onClick={() => navigate('/periodic-table/example')}
+                  >
+                    <div className="w-10 h-10 rounded-full bg-chemistry-soft-purple flex items-center justify-center">
+                      <Database className="h-5 w-5 text-chemistry-purple" />
+                    </div>
+                    <span>Periodic Table</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-auto p-4 flex flex-col items-center gap-2"
+                    onClick={() => navigate('/chemical-reaction/example')}
+                  >
+                    <div className="w-10 h-10 rounded-full bg-chemistry-soft-purple flex items-center justify-center">
+                      <Microscope className="h-5 w-5 text-chemistry-purple" />
+                    </div>
+                    <span>Chemical Reaction</span>
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+    }
+  };
+
+  return (
+    <Layout>
+      <div className="container max-w-6xl mx-auto px-4 py-8">
+        <div className="mb-6 flex items-center justify-between">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft className="h-4 w-4" /> Back
+          </Button>
+          <h1 className="text-2xl font-bold">{type === 'molecule' ? '3D Molecule Viewer' : type === 'periodic-table' ? 'Interactive Periodic Table' : 'Chemical Reaction Simulator'}</h1>
+          <div className="w-20"></div> {/* Spacer for centering */}
+        </div>
+        
+        {renderInteractiveContent()}
+      </div>
+    </Layout>
+  );
+};
+
+export default ModuleInteractivePage;
