@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Layout } from "@/components/Layout";
@@ -50,7 +49,17 @@ interface ModuleInteractivePageProps {
 const ModuleInteractivePage = ({ interactiveType }: ModuleInteractivePageProps) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const type = interactiveType || searchParams.get('type') || 'molecule';
+  const { interactiveId } = useParams();
+  
+  // Determine the type from props, params, or default to molecule
+  let type = interactiveType || searchParams.get('type');
+  
+  // Map route parameter to our internal type names
+  if (type === 'periodic') type = 'periodic-table';
+  if (!type || (type !== 'molecule' && type !== 'periodic-table' && type !== 'chemical-reaction')) {
+    type = 'molecule';
+  }
+  
   const moduleId = searchParams.get('moduleId');
   
   // State for interactive elements
@@ -104,6 +113,7 @@ const ModuleInteractivePage = ({ interactiveType }: ModuleInteractivePageProps) 
   
   // Start automatic rotation on page load
   useEffect(() => {
+    console.log("ModuleInteractivePage loaded with type:", type, "and ID:", interactiveId);
     setRotating(true);
     
     // Auto-show explanation
@@ -113,14 +123,14 @@ const ModuleInteractivePage = ({ interactiveType }: ModuleInteractivePageProps) 
     
     // Show welcome toast
     toast({
-      title: "Interactive Mode",
+      title: `Interactive ${type} Mode`,
       description: "Explore, interact, and learn with this interactive example!",
     });
     
     return () => {
       setRotating(false);
     };
-  }, []);
+  }, [type, interactiveId]);
   
   // For chemical reaction simulation
   useEffect(() => {
@@ -828,6 +838,21 @@ const ModuleInteractivePage = ({ interactiveType }: ModuleInteractivePageProps) 
     }
   };
 
+  const getNavigationPath = (navType: string) => {
+    const basePath = moduleId ? `?moduleId=${moduleId}` : '';
+    
+    // Direct URLs that match our routes
+    if (navType === 'molecule') {
+      return `/molecule/${interactiveId || 'example'}${basePath}`;
+    } else if (navType === 'periodic') {
+      return `/periodic-table/${interactiveId || 'example'}${basePath}`;
+    } else if (navType === 'reaction') {
+      return `/chemical-reaction/${interactiveId || 'example'}${basePath}`;
+    }
+    
+    return `/molecule/${interactiveId || 'example'}${basePath}`;
+  };
+
   return (
     <Layout>
       <div className="container mx-auto px-6 py-12">
@@ -846,22 +871,22 @@ const ModuleInteractivePage = ({ interactiveType }: ModuleInteractivePageProps) 
           <div className="flex space-x-2 mb-6">
             <Button 
               variant={type === 'molecule' ? 'default' : 'outline'} 
-              onClick={() => navigate(`/module-interactive?type=molecule${moduleId ? `&moduleId=${moduleId}` : ''}`)}
+              onClick={() => navigate(getNavigationPath('molecule'))}
               className={type === 'molecule' ? 'bg-chemistry-purple hover:bg-chemistry-blue' : ''}
             >
               3D Molecule
             </Button>
             <Button 
-              variant={type === 'periodic' ? 'default' : 'outline'} 
-              onClick={() => navigate(`/module-interactive?type=periodic${moduleId ? `&moduleId=${moduleId}` : ''}`)}
-              className={type === 'periodic' ? 'bg-chemistry-purple hover:bg-chemistry-blue' : ''}
+              variant={type === 'periodic-table' ? 'default' : 'outline'} 
+              onClick={() => navigate(getNavigationPath('periodic'))}
+              className={type === 'periodic-table' ? 'bg-chemistry-purple hover:bg-chemistry-blue' : ''}
             >
               Periodic Table
             </Button>
             <Button 
-              variant={type === 'reaction' ? 'default' : 'outline'} 
-              onClick={() => navigate(`/module-interactive?type=reaction${moduleId ? `&moduleId=${moduleId}` : ''}`)}
-              className={type === 'reaction' ? 'bg-chemistry-purple hover:bg-chemistry-blue' : ''}
+              variant={type === 'chemical-reaction' ? 'default' : 'outline'} 
+              onClick={() => navigate(getNavigationPath('reaction'))}
+              className={type === 'chemical-reaction' ? 'bg-chemistry-purple hover:bg-chemistry-blue' : ''}
             >
               Chemical Reaction
             </Button>

@@ -19,7 +19,8 @@ const NotFound = () => {
   // Check if the path contains any of the interactive module keywords
   const isInteractiveModulePath = location.pathname.includes('molecule') || 
                                  location.pathname.includes('periodic') || 
-                                 location.pathname.includes('chemical');
+                                 location.pathname.includes('chemical') ||
+                                 location.pathname.includes('interactive');
 
   return (
     <Layout>
@@ -68,6 +69,17 @@ const NotFound = () => {
               </p>
               <div className="text-xs text-gray-500">
                 Path attempted: <code className="bg-gray-100 px-2 py-1 rounded">{location.pathname}</code>
+              </div>
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <Link to="/molecule/example" className="text-sm text-chemistry-purple hover:underline">
+                  3D Molecule Example
+                </Link>
+                <Link to="/periodic-table/example" className="text-sm text-chemistry-purple hover:underline">
+                  Periodic Table Example
+                </Link>
+                <Link to="/chemical-reaction/example" className="text-sm text-chemistry-purple hover:underline">
+                  Chemical Reaction Example
+                </Link>
               </div>
             </div>
           )}

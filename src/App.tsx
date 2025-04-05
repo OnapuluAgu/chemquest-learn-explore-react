@@ -63,12 +63,35 @@ const App = () => {
                   <ModuleDetailPage />
                 </ProtectedRoute>
               } />
-              {/* Main interactive page route */}
+              
+              {/* Main interactive module route */}
               <Route path="/module-interactive/:interactiveId" element={
                 <ProtectedRoute>
                   <ModuleInteractivePage />
                 </ProtectedRoute>
               } />
+              
+              {/* Route for molecule view */}
+              <Route path="/molecule/:interactiveId" element={
+                <ProtectedRoute>
+                  <ModuleInteractivePage interactiveType="molecule" />
+                </ProtectedRoute>
+              } />
+              
+              {/* Route for periodic table */}
+              <Route path="/periodic-table/:interactiveId" element={
+                <ProtectedRoute>
+                  <ModuleInteractivePage interactiveType="periodic-table" />
+                </ProtectedRoute>
+              } />
+              
+              {/* Route for chemical reaction */}
+              <Route path="/chemical-reaction/:interactiveId" element={
+                <ProtectedRoute>
+                  <ModuleInteractivePage interactiveType="chemical-reaction" />
+                </ProtectedRoute>
+              } />
+              
               {/* Interactive type routes with better URL patterns */}
               <Route path="/interactive/molecule/:interactiveId" element={
                 <ProtectedRoute>
@@ -85,22 +108,7 @@ const App = () => {
                   <ModuleInteractivePage interactiveType="chemical-reaction" />
                 </ProtectedRoute>
               } />
-              {/* Legacy interactive routes for backward compatibility */}
-              <Route path="/3d-molecule/:interactiveId" element={
-                <ProtectedRoute>
-                  <ModuleInteractivePage interactiveType="molecule" />
-                </ProtectedRoute>
-              } />
-              <Route path="/periodic-table/:interactiveId" element={
-                <ProtectedRoute>
-                  <ModuleInteractivePage interactiveType="periodic-table" />
-                </ProtectedRoute>
-              } />
-              <Route path="/chemical-reaction/:interactiveId" element={
-                <ProtectedRoute>
-                  <ModuleInteractivePage interactiveType="chemical-reaction" />
-                </ProtectedRoute>
-              } />
+              
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <DashboardPage />
