@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
-import { AtomIcon, Home, BookOpen, Flask } from "lucide-react";
+import { AtomIcon, Home, BookOpen, Beaker } from "lucide-react";
 
 const NotFound = () => {
   const location = useLocation();
@@ -53,7 +53,7 @@ const NotFound = () => {
             {isInteractiveModulePath && (
               <Button asChild variant="outline" className="border-chemistry-purple text-chemistry-purple">
                 <Link to="/dashboard" className="flex items-center gap-2">
-                  <Flask className="h-4 w-4" />
+                  <Beaker className="h-4 w-4" />
                   <span>View Dashboard</span>
                 </Link>
               </Button>
