@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
-import { ArrowLeft, BookOpen, BeakerIcon, GraduationCapIcon, ExternalLink, ChevronRight, Flask } from "lucide-react";
+import { ArrowLeft, BookOpen, BeakerIcon, GraduationCapIcon, ExternalLink, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
