@@ -1,8 +1,9 @@
+
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
-import { ArrowLeft, BookOpen, BeakerIcon, GraduationCapIcon, ExternalLink, ChevronRight } from "lucide-react";
+import { ArrowLeft, BookOpen, BeakerIcon, GraduationCapIcon, ExternalLink, ChevronRight, Flask } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -211,7 +212,7 @@ const ModuleDetailPage = () => {
                             <h5 className="text-sm font-medium mb-2">Fun Fact</h5>
                             <div className="flex items-start gap-3">
                               <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                                <FlaskConicalIcon className="h-5 w-5 text-chemistry-blue" />
+                                <BeakerIcon className="h-5 w-5 text-chemistry-blue" />
                               </div>
                               <p className="text-xs text-gray-600">
                                 {section.title.includes("Atom") ? 
@@ -493,7 +494,8 @@ const ModuleDetailPage = () => {
     }
   };
 
-  const actualCourseId = course?.id || module.course_id;
+  // Now we'll properly handle undefined course object
+  const actualCourseId = course?.id || module?.course_id || courseId || '';
 
   if (isLoadingModule || isLoadingCourse || isLoadingProgress || isLoadingAllModules) {
     return (

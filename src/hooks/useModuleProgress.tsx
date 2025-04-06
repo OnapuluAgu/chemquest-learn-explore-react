@@ -45,19 +45,15 @@ export function useModuleProgress(moduleId: string) {
       
       // If module is completed, try to unlock the next module
       if (completed) {
-        // Get the course ID from the module to find the next module
-        const moduleData = await queryClient.fetchQuery({
+        // Get the module data to find the course ID
+        const { data: module } = await queryClient.fetchQuery({
           queryKey: ['module', moduleId],
-          queryFn: async () => {
-            const response = await fetch(`/api/modules/${moduleId}`);
-            if (!response.ok) return null;
-            return response.json();
-          },
+          queryFn: () => getModuleById(moduleId)
         });
         
-        if (moduleData?.course_id) {
+        if (module?.course_id) {
           // Get all modules for this course to find the next one
-          const modules = await getModulesByCourseId(moduleData.course_id);
+          const modules = await getModulesByCourseId(module.course_id);
           
           // Sort modules by order_index
           const sortedModules = [...modules].sort((a, b) => a.order_index - b.order_index);
@@ -68,6 +64,7 @@ export function useModuleProgress(moduleId: string) {
           // If there's a next module, unlock it
           if (currentIndex >= 0 && currentIndex < sortedModules.length - 1) {
             const nextModule = sortedModules[currentIndex + 1];
+            console.log("Unlocking next module:", nextModule.title);
             // Initialize progress for next module to make it available
             await updateUserModuleProgress(nextModule.id, 0, false);
           }
@@ -81,9 +78,10 @@ export function useModuleProgress(moduleId: string) {
       }
       
       // Invalidate related queries to ensure data is fresh everywhere
-      queryClient.invalidateQueries({ queryKey: ['module-progress', moduleId] });
+      queryClient.invalidateQueries({ queryKey: ['module-progress'] });
       queryClient.invalidateQueries({ queryKey: ['course-modules'] });
       queryClient.invalidateQueries({ queryKey: ['userCourses'] });
+      queryClient.invalidateQueries({ queryKey: ['user-courses'] });
       
     } catch (error) {
       console.error("Error updating progress:", error);
@@ -101,4 +99,16 @@ export function useModuleProgress(moduleId: string) {
     updateProgress,
     isLoading
   };
+}
+
+// Import this function from api.ts to prevent circular dependencies
+async function getModuleById(moduleId: string) {
+  try {
+    const response = await fetch(`/api/modules/${moduleId}`);
+    if (!response.ok) return null;
+    return response.json();
+  } catch (error) {
+    console.error("Error fetching module:", error);
+    return null;
+  }
 }
