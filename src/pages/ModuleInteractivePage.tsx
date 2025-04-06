@@ -11,6 +11,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getModuleById } from "@/lib/api";
 import { VirtualLabPreview } from "@/components/VirtualLabPreview";
 import { useModuleProgress } from "@/hooks/useModuleProgress";
+import { PeriodicTableInteractive } from "@/components/PeriodicTableInteractive";
 
 interface InteractiveProps {
   interactiveType?: "molecule" | "periodic-table" | "chemical-reaction";
@@ -102,35 +103,7 @@ const ModuleInteractivePage = ({ interactiveType: propType }: InteractiveProps) 
         );
         
       case "periodic-table":
-        return (
-          <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-            <h2 className="text-xl font-semibold mb-4">Interactive Periodic Table</h2>
-            <div className="aspect-video bg-gray-100 rounded-md flex items-center justify-center">
-              <div className="text-center p-6">
-                <Table2 className="h-16 w-16 mx-auto text-chemistry-blue mb-4" />
-                <h3 className="text-lg font-medium mb-2">Periodic Table Explorer</h3>
-                <p className="text-gray-600 max-w-md mx-auto mb-4">
-                  Explore elements, their properties, and relationship patterns across the periodic table of elements.
-                </p>
-                <Button className="bg-chemistry-blue">
-                  Explore Elements
-                </Button>
-              </div>
-            </div>
-            
-            <div className="mt-6 grid grid-cols-8 gap-1">
-              {[...Array(16)].map((_, i) => (
-                <div key={i} className="aspect-square bg-chemistry-soft-purple rounded flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="text-xs font-bold">{i+1}</div>
-                    <div className="text-lg font-bold">{['H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne', 'Na', 'Mg', 'Al', 'Si', 'P', 'S'][i]}</div>
-                    <div className="text-xs">{['Hydrogen', 'Helium', 'Lithium', 'Beryllium', 'Boron', 'Carbon', 'Nitrogen', 'Oxygen', 'Fluorine', 'Neon', 'Sodium', 'Magnesium', 'Aluminum', 'Silicon', 'Phosphorus', 'Sulfur'][i]}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
+        return <PeriodicTableInteractive />;
         
       case "chemical-reaction":
         return (
