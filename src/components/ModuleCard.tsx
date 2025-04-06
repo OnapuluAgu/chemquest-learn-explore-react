@@ -79,10 +79,20 @@ export const ModuleCard = ({
 
   const getButtonText = () => {
     if (locked) return "Locked";
-    if (status === "in-progress") return "Continue";
     if (status === "completed") return "Review";
+    if (status === "in-progress") return "Continue";
     return "Start";
   };
+
+  // Compute the correct status based on progress
+  const computedStatus = () => {
+    if (progress >= 100) return "completed";
+    if (progress > 0) return "in-progress";
+    return "not-started";
+  };
+
+  // Use computed status if provided status doesn't match the progress
+  const actualStatus = computedStatus();
 
   return (
     <Card className={cn("transition-all hover:shadow-md", getBorderColor())}>
@@ -126,7 +136,9 @@ export const ModuleCard = ({
           className={`w-full ${
             locked 
               ? "bg-gray-300 cursor-not-allowed" 
-              : "bg-chemistry-purple hover:bg-chemistry-blue"
+              : actualStatus === "completed"
+                ? "bg-green-600 hover:bg-green-700"
+                : "bg-chemistry-purple hover:bg-chemistry-blue"
           }`}
         >
           {!locked ? (

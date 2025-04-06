@@ -1,9 +1,8 @@
-
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
-import { ArrowLeft, BookOpen, BeakerIcon, GraduationCapIcon, ExternalLink, ChevronRight } from "lucide-react";
+import { ArrowLeft, BookOpen, BeakerIcon, GraduationCapIcon, ExternalLink, ChevronRight, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -17,6 +16,7 @@ const ModuleDetailPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [nextModuleId, setNextModuleId] = useState<string | null>(null);
+  const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   
   if (!moduleId) {
     return <div>Module ID is required</div>;
@@ -52,9 +52,35 @@ const ModuleDetailPage = () => {
   const { 
     currentProgress, 
     isCompleted,
+    hasAttemptedExercise,
+    markExerciseAttempted,
     updateProgress,
     isLoading: isLoadingProgress 
   } = useModuleProgress(moduleId);
+
+  useEffect(() => {
+    if (module && !timeRemaining) {
+      const totalSeconds = (module.estimated_minutes || 30) * 60;
+      setTimeRemaining(totalSeconds);
+    }
+  }, [module, timeRemaining]);
+
+  useEffect(() => {
+    if (timeRemaining === null || timeRemaining <= 0) return;
+    
+    const timer = setInterval(() => {
+      setTimeRemaining(prev => (prev !== null && prev > 0) ? prev - 1 : 0);
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, [timeRemaining]);
+
+  const formatTime = (seconds: number | null) => {
+    if (seconds === null) return "00:00";
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   useEffect(() => {
     if (allModules.length > 0 && moduleId) {
@@ -100,6 +126,15 @@ const ModuleDetailPage = () => {
   };
 
   const handleCompleteModule = async () => {
+    if (!hasAttemptedExercise) {
+      toast({
+        title: "Exercise Required",
+        description: "Please attempt the module exercise before completing this module.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     await updateProgress(100);
     
     setTimeout(() => {
@@ -138,7 +173,10 @@ const ModuleDetailPage = () => {
                         <div className="md:w-1/3">
                           <div 
                             className="rounded-md overflow-hidden bg-gray-100 aspect-video flex items-center justify-center cursor-pointer hover:opacity-90 transition-opacity relative group"
-                            onClick={() => navigateToInteractive(section.title, section.title.split(' ')[1].toLowerCase())}
+                            onClick={() => {
+                              navigateToInteractive(section.title, section.title.split(' ')[1].toLowerCase());
+                              markExerciseAttempted();
+                            }}
                           >
                             <img 
                               src={section.image_url} 
@@ -166,7 +204,10 @@ const ModuleDetailPage = () => {
                         <Button 
                           variant="outline" 
                           className="flex items-center gap-2 text-chemistry-purple border-chemistry-purple hover:bg-chemistry-soft-purple"
-                          onClick={() => navigateToInteractive(section.title, section.title.split(' ')[1].toLowerCase())}
+                          onClick={() => {
+                            navigateToInteractive(section.title, section.title.split(' ')[1].toLowerCase());
+                            markExerciseAttempted();
+                          }}
                         >
                           Try Interactive Example <ExternalLink className="h-4 w-4" />
                         </Button>
@@ -269,6 +310,7 @@ const ModuleDetailPage = () => {
                                 optionIndex === item.correct_index ? "border-green-300 hover:bg-green-50" : ""
                               }`}
                               onClick={() => {
+                                markExerciseAttempted();
                                 const progressIncrement = 20;
                                 const newProgress = Math.min(currentProgress + progressIncrement, 100);
                                 updateProgress(newProgress);
@@ -298,23 +340,6 @@ const ModuleDetailPage = () => {
                 </CardContent>
               </Card>
             )}
-
-            <div className="flex justify-between pt-4">
-              <Button variant="outline" asChild>
-                <Link to={`/course/${module.course_id}`} className="flex items-center gap-2">
-                  <ArrowLeft className="h-4 w-4" /> Back to Course
-                </Link>
-              </Button>
-              
-              <Button 
-                className="bg-chemistry-purple hover:bg-chemistry-blue"
-                onClick={() => {
-                  updateProgress(100);
-                }}
-              >
-                Mark as Complete
-              </Button>
-            </div>
           </div>
         );
       }
@@ -366,6 +391,7 @@ const ModuleDetailPage = () => {
                   <Button
                     className="bg-chemistry-purple hover:bg-chemistry-blue"
                     onClick={() => {
+                      markExerciseAttempted();
                       const newProgress = Math.min(currentProgress + 50, 100);
                       updateProgress(newProgress);
                       
@@ -381,23 +407,6 @@ const ModuleDetailPage = () => {
                 </div>
               </CardContent>
             </Card>
-            
-            <div className="flex justify-between pt-4">
-              <Button variant="outline" asChild>
-                <Link to={`/course/${module.course_id}`} className="flex items-center gap-2">
-                  <ArrowLeft className="h-4 w-4" /> Back to Course
-                </Link>
-              </Button>
-              
-              <Button 
-                className="bg-chemistry-purple hover:bg-chemistry-blue"
-                onClick={() => {
-                  updateProgress(100);
-                }}
-              >
-                Mark as Complete
-              </Button>
-            </div>
           </div>
         );
       }
@@ -428,6 +437,7 @@ const ModuleDetailPage = () => {
                             key={optionIndex}
                             className="p-3 border rounded-md cursor-pointer hover:bg-gray-50"
                             onClick={() => {
+                              markExerciseAttempted();
                               const totalQuestions = quiz.questions.length;
                               const progressPerQuestion = 100 / totalQuestions;
                               
@@ -463,6 +473,7 @@ const ModuleDetailPage = () => {
                   <Button
                     className="bg-chemistry-purple hover:bg-chemistry-blue"
                     onClick={() => {
+                      markExerciseAttempted();
                       updateProgress(100);
                       
                       toast({
@@ -477,14 +488,6 @@ const ModuleDetailPage = () => {
                 </div>
               </CardContent>
             </Card>
-            
-            <div className="flex justify-between pt-4">
-              <Button variant="outline" asChild>
-                <Link to={`/course/${module.course_id}`} className="flex items-center gap-2">
-                  <ArrowLeft className="h-4 w-4" /> Back to Course
-                </Link>
-              </Button>
-            </div>
           </div>
         );
       }
@@ -494,7 +497,6 @@ const ModuleDetailPage = () => {
     }
   };
 
-  // Now we'll properly handle undefined course object
   const actualCourseId = course?.id || module?.course_id || courseId || '';
 
   if (isLoadingModule || isLoadingCourse || isLoadingProgress || isLoadingAllModules) {
@@ -538,19 +540,26 @@ const ModuleDetailPage = () => {
             <p className="text-gray-600 mt-2">{module.description}</p>
           </div>
 
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <div className={`p-2 rounded-md ${
-              module.type === 'theory' ? "bg-chemistry-soft-purple text-chemistry-purple" :
-              module.type === 'lab' ? "bg-blue-100 text-chemistry-blue" :
-              "bg-amber-100 text-amber-800"
-            }`}>
-              {renderModuleIcon()}
+          <div className="flex flex-col md:flex-row items-center gap-4">
+            <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-md">
+              <Clock className="h-4 w-4 text-chemistry-purple" />
+              <span>{formatTime(timeRemaining)}</span>
             </div>
-            <span className="capitalize">{module.type}</span>
-            <span className="mx-2">•</span>
-            <span>{module.estimated_minutes} min</span>
-            <span className="mx-2">•</span>
-            <span>{module.points} pts</span>
+            
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <div className={`p-2 rounded-md ${
+                module.type === 'theory' ? "bg-chemistry-soft-purple text-chemistry-purple" :
+                module.type === 'lab' ? "bg-blue-100 text-chemistry-blue" :
+                "bg-amber-100 text-amber-800"
+              }`}>
+                {renderModuleIcon()}
+              </div>
+              <span className="capitalize">{module.type}</span>
+              <span className="mx-2">•</span>
+              <span>{module.estimated_minutes} min</span>
+              <span className="mx-2">•</span>
+              <span>{module.points} pts</span>
+            </div>
           </div>
         </div>
 
@@ -593,8 +602,9 @@ const ModuleDetailPage = () => {
             <Button 
               className="bg-chemistry-purple hover:bg-chemistry-blue"
               onClick={handleCompleteModule}
+              disabled={!hasAttemptedExercise}
             >
-              Mark as Complete
+              {hasAttemptedExercise ? "Complete & Continue" : "Attempt Exercise to Continue"}
             </Button>
           )}
         </div>
