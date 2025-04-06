@@ -172,6 +172,9 @@ export const getUserCourses = async () => {
       // Find modules for this course
       const courseModules = modules.filter(module => module.course_id === course.id);
       
+      // Sort modules by order_index
+      const sortedModules = [...courseModules].sort((a, b) => a.order_index - b.order_index);
+      
       // Find user progress for modules in this course
       const courseProgress = userProgress.filter(progress => 
         courseModules.some(module => module.id === progress.module_id)
@@ -186,13 +189,17 @@ export const getUserCourses = async () => {
         : 0;
       
       // Find the next incomplete module
-      const nextIncompleteModule = courseModules
-        .sort((a, b) => a.order_index - b.order_index)
+      let nextIncompleteModule = sortedModules
         .find(module => 
           !courseProgress.some(progress => 
             progress.module_id === module.id && progress.completed
           )
         );
+      
+      // If all modules are completed or no incomplete module found, use the first module
+      if (!nextIncompleteModule && sortedModules.length > 0) {
+        nextIncompleteModule = sortedModules[0];
+      }
       
       // Find the most recently accessed module
       const lastAccessed = courseProgress.length > 0
@@ -416,6 +423,8 @@ export const updateUserModuleProgress = async (
 
     const userId = session.data.session.user.id;
     
+    console.log(`Updating progress for module ${moduleId}: ${progress}%, completed: ${completed}`);
+    
     // Check if a record exists
     const { data: existingRecord } = await supabase
       .from('user_module_progress')
@@ -446,6 +455,7 @@ export const updateUserModuleProgress = async (
         throw error;
       }
 
+      console.log(`Progress updated successfully for module ${moduleId}`);
       return data as UserModuleProgress;
     } else {
       // Insert new record
@@ -469,6 +479,7 @@ export const updateUserModuleProgress = async (
         throw error;
       }
 
+      console.log(`New progress record created for module ${moduleId}`);
       return data as UserModuleProgress;
     }
   } catch (error) {

@@ -1,15 +1,25 @@
 
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
 import { ModuleCard } from "@/components/ModuleCard";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, AtomIcon, Beaker, BookOpen } from "lucide-react";
-import { getCourseById, getModulesByCourseId } from "@/lib/api";
+import { ArrowLeft, AtomIcon, BeakerIcon, BookOpen } from "lucide-react";
+import { getCourseById, getModulesByCourseId, getUserModuleProgress } from "@/lib/api";
+import { useEffect, useState } from "react";
+
+// Helper function to determine module status based on progress
+const getModuleStatus = (progress: number | null, completed: boolean | null) => {
+  if (completed) return "completed";
+  if (progress && progress > 0) return "in-progress";
+  return "not-started";
+};
 
 const CourseDetailPage = () => {
   const { courseId } = useParams<{ courseId: string }>();
+  const navigate = useNavigate();
+  const [moduleProgress, setModuleProgress] = useState<Record<string, { progress: number, completed: boolean }>>({});
   
   if (!courseId) {
     return <div>Course ID is required</div>;
@@ -34,6 +44,41 @@ const CourseDetailPage = () => {
     queryFn: () => getModulesByCourseId(courseId),
     enabled: !!courseId
   });
+  
+  // Sort modules by order_index
+  const sortedModules = [...modules].sort((a, b) => a.order_index - b.order_index);
+
+  // Load progress for each module
+  useEffect(() => {
+    const fetchAllModuleProgress = async () => {
+      if (!sortedModules.length) return;
+      
+      // Create an object to store progress for all modules
+      const progressData: Record<string, { progress: number, completed: boolean }> = {};
+      
+      // Fetch progress for each module sequentially
+      for (const module of sortedModules) {
+        try {
+          const moduleProgressData = await getUserModuleProgress(module.id);
+          if (moduleProgressData) {
+            progressData[module.id] = {
+              progress: moduleProgressData.progress || 0,
+              completed: moduleProgressData.completed || false
+            };
+          } else {
+            progressData[module.id] = { progress: 0, completed: false };
+          }
+        } catch (error) {
+          console.error(`Error fetching progress for module ${module.id}:`, error);
+          progressData[module.id] = { progress: 0, completed: false };
+        }
+      }
+      
+      setModuleProgress(progressData);
+    };
+
+    fetchAllModuleProgress();
+  }, [sortedModules]);
 
   // Get course icon component
   const renderCourseIcon = () => {
@@ -43,12 +88,37 @@ const CourseDetailPage = () => {
       case 'atom':
         return <AtomIcon className="h-7 w-7" />;
       case 'beaker':
-        return <Beaker className="h-7 w-7" />;
+        return <BeakerIcon className="h-7 w-7" />;
       case 'book':
         return <BookOpen className="h-7 w-7" />;
       default:
         return <AtomIcon className="h-7 w-7" />;
     }
+  };
+
+  // Determine if a module should be locked based on previous module's completion
+  const isModuleLocked = (index: number) => {
+    // First module is always unlocked
+    if (index === 0) return false;
+    
+    // For subsequent modules, check if previous module is completed
+    const previousModule = sortedModules[index - 1];
+    if (!previousModule) return false;
+    
+    return !(moduleProgress[previousModule.id]?.completed);
+  };
+
+  // Find the first incomplete module for "Start Learning" button
+  const getFirstAvailableModule = () => {
+    for (let i = 0; i < sortedModules.length; i++) {
+      const module = sortedModules[i];
+      // If module is not locked and either not started or in progress
+      if (!isModuleLocked(i) && !moduleProgress[module.id]?.completed) {
+        return module.id;
+      }
+    }
+    // If all modules are completed, return the first one
+    return sortedModules[0]?.id;
   };
 
   // Show loading state
@@ -76,6 +146,20 @@ const CourseDetailPage = () => {
       </Layout>
     );
   }
+
+  // Calculate overall course progress
+  const calculateCourseProgress = () => {
+    if (!sortedModules.length) return 0;
+    
+    let completedModules = 0;
+    for (const module of sortedModules) {
+      if (moduleProgress[module.id]?.completed) {
+        completedModules++;
+      }
+    }
+    
+    return Math.round((completedModules / sortedModules.length) * 100);
+  };
 
   return (
     <Layout>
@@ -107,6 +191,9 @@ const CourseDetailPage = () => {
               <div className="flex items-center gap-1">
                 <span className="font-medium">{course.estimated_hours}</span> Hours
               </div>
+              <div className="flex items-center gap-1">
+                <span className="font-medium">{calculateCourseProgress()}%</span> Complete
+              </div>
             </div>
           </div>
           
@@ -126,13 +213,26 @@ const CourseDetailPage = () => {
                   <span className="text-gray-600">Duration:</span>
                   <span className="font-medium">{course.estimated_hours} hours</span>
                 </li>
+                <li className="flex justify-between">
+                  <span className="text-gray-600">Progress:</span>
+                  <span className="font-medium">{calculateCourseProgress()}%</span>
+                </li>
               </ul>
               
               <Separator className="my-4" />
               
-              <Button asChild className="w-full bg-chemistry-purple hover:bg-chemistry-blue">
-                <Link to={`/course/${courseId}/module/${modules[0]?.id}`}>
-                  Start Learning
+              <Button 
+                asChild 
+                className="w-full bg-chemistry-purple hover:bg-chemistry-blue"
+                onClick={() => {
+                  const moduleId = getFirstAvailableModule();
+                  if (moduleId) {
+                    navigate(`/course/${courseId}/module/${moduleId}`);
+                  }
+                }}
+              >
+                <Link to={`/course/${courseId}/module/${getFirstAvailableModule()}`}>
+                  Continue Learning
                 </Link>
               </Button>
             </div>
@@ -145,18 +245,29 @@ const CourseDetailPage = () => {
           <h2 className="text-2xl font-semibold mb-6">Course Modules</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {modules.map((module) => (
-              <ModuleCard
-                key={module.id}
-                id={module.id}
-                title={module.title}
-                description={module.description}
-                progress={0} // This would come from user progress
-                estimatedTime={`${module.estimated_minutes} min`}
-                status="not-started" // This would come from user progress
-                type={module.type}
-              />
-            ))}
+            {sortedModules.map((module, index) => {
+              const moduleData = moduleProgress[module.id] || { progress: 0, completed: false };
+              const locked = isModuleLocked(index);
+              const status = locked 
+                ? "not-started" 
+                : getModuleStatus(moduleData.progress, moduleData.completed);
+              
+              return (
+                <ModuleCard
+                  key={module.id}
+                  id={module.id}
+                  title={module.title}
+                  description={module.description}
+                  progress={moduleData.progress || 0}
+                  estimatedTime={`${module.estimated_minutes} min`}
+                  status={status}
+                  type={module.type}
+                  locked={locked}
+                  courseId={courseId}
+                  orderIndex={module.order_index}
+                />
+              );
+            })}
           </div>
           
           {modules.length === 0 && (

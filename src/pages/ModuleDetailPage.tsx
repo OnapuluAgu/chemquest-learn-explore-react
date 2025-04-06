@@ -1,19 +1,21 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
-import { ArrowLeft, BookOpen, FlaskConicalIcon, GraduationCapIcon, ExternalLink } from "lucide-react";
+import { ArrowLeft, BookOpen, BeakerIcon, GraduationCapIcon, ExternalLink, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/components/ui/use-toast";
-import { getModuleById, getCourseById } from "@/lib/api";
+import { getModuleById, getCourseById, getModulesByCourseId } from "@/lib/api";
 import { useModuleProgress } from "@/hooks/useModuleProgress";
 
 const ModuleDetailPage = () => {
-  const { moduleId } = useParams<{ moduleId: string }>();
+  const { courseId, moduleId } = useParams<{ courseId: string; moduleId: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [nextModuleId, setNextModuleId] = useState<string | null>(null);
   
   if (!moduleId) {
     return <div>Module ID is required</div>;
@@ -32,28 +34,52 @@ const ModuleDetailPage = () => {
     data: course, 
     isLoading: isLoadingCourse 
   } = useQuery({
-    queryKey: ['course', module?.course_id],
-    queryFn: () => getCourseById(module?.course_id || ''),
-    enabled: !!module?.course_id
+    queryKey: ['course', module?.course_id || courseId],
+    queryFn: () => getCourseById(module?.course_id || courseId || ''),
+    enabled: !!(module?.course_id || courseId)
+  });
+
+  const {
+    data: allModules = [],
+    isLoading: isLoadingAllModules
+  } = useQuery({
+    queryKey: ['course-modules', module?.course_id || courseId],
+    queryFn: () => getModulesByCourseId(module?.course_id || courseId || ''),
+    enabled: !!(module?.course_id || courseId)
   });
 
   const { 
     currentProgress, 
+    isCompleted,
     updateProgress,
     isLoading: isLoadingProgress 
   } = useModuleProgress(moduleId);
 
   useEffect(() => {
-    if (module && currentProgress === 0) {
+    if (allModules.length > 0 && moduleId) {
+      const sortedModules = [...allModules].sort((a, b) => a.order_index - b.order_index);
+      
+      const currentIndex = sortedModules.findIndex(m => m.id === moduleId);
+      
+      if (currentIndex >= 0 && currentIndex < sortedModules.length - 1) {
+        setNextModuleId(sortedModules[currentIndex + 1].id);
+      } else {
+        setNextModuleId(null);
+      }
+    }
+  }, [allModules, moduleId]);
+
+  useEffect(() => {
+    if (module && currentProgress === 0 && !isCompleted) {
       const initialProgress = 10;
       updateProgress(initialProgress);
     }
-  }, [module, currentProgress, updateProgress]);
+  }, [module, currentProgress, isCompleted, updateProgress]);
 
   const renderModuleIcon = () => {
     switch (module?.type) {
       case 'lab':
-        return <FlaskConicalIcon className="h-5 w-5" />;
+        return <BeakerIcon className="h-5 w-5" />;
       case 'quiz':
         return <GraduationCapIcon className="h-5 w-5" />;
       case 'theory':
@@ -70,6 +96,26 @@ const ModuleDetailPage = () => {
     updateProgress(newProgress);
     
     navigate(`/module-interactive/${urlTitle}?type=${contentType}&moduleId=${moduleId}`);
+  };
+
+  const handleCompleteModule = async () => {
+    await updateProgress(100);
+    
+    setTimeout(() => {
+      if (nextModuleId && course) {
+        toast({
+          title: "Moving to next module",
+          description: "The next module is now available.",
+        });
+        navigate(`/course/${course.id}/module/${nextModuleId}`);
+      } else if (course) {
+        toast({
+          title: "Course Completed!",
+          description: "You've completed all modules in this course.",
+        });
+        navigate(`/course/${course.id}`);
+      }
+    }, 1500);
   };
 
   const renderModuleContent = () => {
@@ -447,7 +493,9 @@ const ModuleDetailPage = () => {
     }
   };
 
-  if (isLoadingModule || isLoadingCourse || isLoadingProgress) {
+  const actualCourseId = course?.id || module.course_id;
+
+  if (isLoadingModule || isLoadingCourse || isLoadingProgress || isLoadingAllModules) {
     return (
       <Layout>
         <div className="container mx-auto px-6 py-12 flex justify-center items-center min-h-[60vh]">
@@ -475,7 +523,7 @@ const ModuleDetailPage = () => {
     <Layout>
       <div className="container mx-auto px-6 py-12">
         <div className="flex items-center mb-6">
-          <Link to={`/course/${module.course_id}`} className="text-chemistry-purple hover:underline">
+          <Link to={`/course/${actualCourseId}`} className="text-chemistry-purple hover:underline">
             {course?.title || 'Course'}
           </Link>
           <span className="mx-2">/</span>
@@ -515,6 +563,39 @@ const ModuleDetailPage = () => {
         <Separator className="mb-8" />
         
         {renderModuleContent()}
+
+        <div className="flex justify-between pt-4 mt-8">
+          <Button variant="outline" asChild>
+            <Link to={`/course/${actualCourseId}`} className="flex items-center gap-2">
+              <ArrowLeft className="h-4 w-4" /> Back to Course
+            </Link>
+          </Button>
+          
+          {isCompleted ? (
+            nextModuleId ? (
+              <Button 
+                className="bg-chemistry-purple hover:bg-chemistry-blue"
+                onClick={() => navigate(`/course/${actualCourseId}/module/${nextModuleId}`)}
+              >
+                Next Module <ChevronRight className="h-4 w-4 ml-2" />
+              </Button>
+            ) : (
+              <Button 
+                className="bg-green-600 hover:bg-green-700"
+                onClick={() => navigate(`/course/${actualCourseId}`)}
+              >
+                Course Completed
+              </Button>
+            )
+          ) : (
+            <Button 
+              className="bg-chemistry-purple hover:bg-chemistry-blue"
+              onClick={handleCompleteModule}
+            >
+              Mark as Complete
+            </Button>
+          )}
+        </div>
       </div>
     </Layout>
   );

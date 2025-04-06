@@ -2,7 +2,7 @@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { AtomIcon, BookOpenIcon, FlaskConicalIcon, GraduationCapIcon } from "lucide-react";
+import { AtomIcon, BookOpenIcon, BeakerIcon, GraduationCapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 import { Link } from "react-router-dom";
@@ -15,6 +15,9 @@ interface ModuleCardProps {
   estimatedTime?: string;
   status?: "not-started" | "in-progress" | "completed";
   type?: "theory" | "lab" | "quiz";
+  locked?: boolean;
+  courseId?: string;
+  orderIndex?: number;
 }
 
 export const ModuleCard = ({
@@ -25,11 +28,14 @@ export const ModuleCard = ({
   estimatedTime = "20 min",
   status = "not-started",
   type = "theory",
+  locked = false,
+  courseId,
+  orderIndex,
 }: ModuleCardProps) => {
   const getIcon = () => {
     switch (type) {
       case "lab":
-        return <FlaskConicalIcon className="h-5 w-5" />;
+        return <BeakerIcon className="h-5 w-5" />;
       case "quiz":
         return <GraduationCapIcon className="h-5 w-5" />;
       case "theory":
@@ -51,6 +57,8 @@ export const ModuleCard = ({
   };
 
   const getStatusText = () => {
+    if (locked) return "Locked";
+    
     switch (status) {
       case "completed":
         return "Completed";
@@ -63,9 +71,17 @@ export const ModuleCard = ({
   };
 
   const getBorderColor = () => {
+    if (locked) return "border-gray-200 opacity-60";
     if (status === "completed") return "border-green-200";
     if (status === "in-progress") return "border-chemistry-blue";
     return "border-gray-200";
+  };
+
+  const getButtonText = () => {
+    if (locked) return "Locked";
+    if (status === "in-progress") return "Continue";
+    if (status === "completed") return "Review";
+    return "Start";
   };
 
   return (
@@ -104,10 +120,22 @@ export const ModuleCard = ({
         </div>
       </CardContent>
       <CardFooter>
-        <Button asChild className="w-full bg-chemistry-purple hover:bg-chemistry-blue">
-          <Link to={`/module/${id}`}>
-            {status === "in-progress" ? "Continue" : status === "completed" ? "Review" : "Start"} Module
-          </Link>
+        <Button 
+          asChild={!locked} 
+          disabled={locked}
+          className={`w-full ${
+            locked 
+              ? "bg-gray-300 cursor-not-allowed" 
+              : "bg-chemistry-purple hover:bg-chemistry-blue"
+          }`}
+        >
+          {!locked ? (
+            <Link to={`/course/${courseId}/module/${id}`}>
+              {getButtonText()} Module
+            </Link>
+          ) : (
+            <span>Complete Previous Module First</span>
+          )}
         </Button>
       </CardFooter>
     </Card>

@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,11 +5,15 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AtomIcon, Beaker, ChevronsRight, Award, Trophy, Calendar, Clock, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import { getUserCourses, getUserAchievements, getUserActivities } from "@/lib/api";
+import { Link, useNavigate } from "react-router-dom";
+import { getUserCourses, getUserAchievements, getUserActivities, getModulesByCourseId } from "@/lib/api";
 import { format, parseISO } from "date-fns";
+import { useEffect, useState } from "react";
 
 const DashboardPage = () => {
+  const navigate = useNavigate();
+  const [nextModulesMap, setNextModulesMap] = useState<Record<string, string>>({});
+  
   const { 
     data: courses = [], 
     isLoading: isLoadingCourses 
@@ -35,7 +38,36 @@ const DashboardPage = () => {
     queryFn: getUserActivities
   });
 
-  // Map the data to match the UI components
+  useEffect(() => {
+    const fetchNextModules = async () => {
+      const moduleMap: Record<string, string> = {};
+      
+      for (const course of courses) {
+        try {
+          const modules = await getModulesByCourseId(course.id);
+          
+          const sortedModules = [...modules].sort((a, b) => a.order_index - b.order_index);
+          
+          const nextIndex = course.modules_completed >= sortedModules.length 
+            ? 0
+            : course.modules_completed;
+            
+          if (sortedModules[nextIndex]) {
+            moduleMap[course.id] = sortedModules[nextIndex].id;
+          }
+        } catch (error) {
+          console.error(`Error fetching modules for course ${course.id}:`, error);
+        }
+      }
+      
+      setNextModulesMap(moduleMap);
+    };
+    
+    if (courses.length > 0) {
+      fetchNextModules();
+    }
+  }, [courses]);
+
   const mappedCourses = courses.map(course => ({
     id: course.id,
     title: course.title,
@@ -48,6 +80,7 @@ const DashboardPage = () => {
     nextModule: course.next_module,
     icon: getIconFromName(course.course_icon),
     color: course.color_class,
+    nextModuleId: nextModulesMap[course.id] || null
   }));
 
   const mappedAchievements = achievements.map(achievement => ({
@@ -97,7 +130,14 @@ const DashboardPage = () => {
     }
   }
 
-  // Show loading state if data is loading
+  const handleContinueLearning = (courseId: string, nextModuleId: string | null) => {
+    if (courseId && nextModuleId) {
+      navigate(`/course/${courseId}/module/${nextModuleId}`);
+    } else {
+      navigate(`/course/${courseId}`);
+    }
+  };
+
   const isLoading = isLoadingCourses || isLoadingAchievements || isLoadingActivities;
   if (isLoading) {
     return (
@@ -109,7 +149,6 @@ const DashboardPage = () => {
     );
   }
 
-  // Use fallback data if no courses or achievements are available
   const coursesToDisplay = mappedCourses.length > 0 ? mappedCourses : [
     {
       id: "CQ101",
@@ -123,6 +162,7 @@ const DashboardPage = () => {
       nextModule: "Introduction to Chemistry",
       icon: <AtomIcon className="h-5 w-5" />,
       color: "bg-chemistry-soft-purple text-chemistry-purple",
+      nextModuleId: null
     }
   ];
 
@@ -219,12 +259,13 @@ const DashboardPage = () => {
                         <div className="text-sm text-gray-500">
                           Last accessed: {course.lastAccessed}
                         </div>
-                        <Button asChild className="bg-chemistry-purple hover:bg-chemistry-blue">
-                          <Link to={`/course/${course.id}/module/${course.modules.completed + 1}`}>
-                            <span className="flex items-center gap-1">
-                              Continue <ChevronsRight className="h-4 w-4" />
-                            </span>
-                          </Link>
+                        <Button 
+                          className="bg-chemistry-purple hover:bg-chemistry-blue"
+                          onClick={() => handleContinueLearning(course.id, course.nextModuleId)}
+                        >
+                          <span className="flex items-center gap-1">
+                            Continue <ChevronsRight className="h-4 w-4" />
+                          </span>
                         </Button>
                       </div>
                     </div>
