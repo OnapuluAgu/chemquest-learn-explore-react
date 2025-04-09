@@ -15,51 +15,49 @@ const AtomSphere = ({ position, color, scale = 1 }: { position: [number, number,
   );
 };
 
-// Bond component - rebuilt to avoid Three.js compatibility issues
+// Simplified Bond component - using a simple cylinder between two points
 const Bond = ({ start, end, color = "#888888" }: { start: [number, number, number]; end: [number, number, number]; color?: string }) => {
-  const objRef = useRef<THREE.Group>(null);
+  // Convert array positions to Vector3 for calculations
+  const startVec = new THREE.Vector3(...start);
+  const endVec = new THREE.Vector3(...end);
   
-  useEffect(() => {
-    if (objRef.current) {
-      // Create vectors from arrays
-      const startVec = new THREE.Vector3(...start);
-      const endVec = new THREE.Vector3(...end);
-      
-      // Calculate midpoint for positioning
-      const midpoint = new THREE.Vector3().addVectors(startVec, endVec).multiplyScalar(0.5);
-      objRef.current.position.copy(midpoint);
-      
-      // Calculate distance and direction
-      const distance = startVec.distanceTo(endVec);
-      const direction = new THREE.Vector3().subVectors(endVec, startVec).normalize();
-      
-      // Set the rotation to align with the direction vector
-      if (Math.abs(direction.y) < 0.99) {
-        // For non-vertical bonds
-        const yAxis = new THREE.Vector3(0, 1, 0);
-        const rotationAxis = new THREE.Vector3().crossVectors(yAxis, direction).normalize();
-        const angle = Math.acos(yAxis.dot(direction));
-        objRef.current.quaternion.setFromAxisAngle(rotationAxis, angle);
-      } else {
-        // For near-vertical bonds
-        if (direction.y < 0) {
-          // If pointing down Y axis, flip it
-          objRef.current.rotation.x = Math.PI;
-        }
-      }
-      
-      // Scale to match the bond length (Y is the cylinder's height axis)
-      objRef.current.scale.y = distance;
+  // Calculate midpoint for cylinder position
+  const midpoint = startVec.clone().add(endVec).multiplyScalar(0.5);
+  
+  // Calculate direction vector
+  const direction = endVec.clone().sub(startVec);
+  const length = direction.length();
+  
+  // Normalize direction vector
+  direction.normalize();
+  
+  // Create quaternion from direction
+  // We need to align our cylinder with the direction vector
+  // Cylinders are aligned with the Y axis by default
+  const quaternion = new THREE.Quaternion();
+  
+  // Default direction is along Y-axis (0, 1, 0)
+  const defaultDirection = new THREE.Vector3(0, 1, 0);
+  
+  // Handle cases where direction is parallel to default direction
+  if (Math.abs(defaultDirection.dot(direction)) > 0.99) {
+    // If parallel but possibly in opposite direction
+    if (direction.y < 0) {
+      // Pointing down Y-axis, rotate 180 degrees around X
+      quaternion.setFromEuler(new THREE.Euler(Math.PI, 0, 0));
     }
-  }, [start, end]);
+  } else {
+    // Calculate rotation axis and angle for non-parallel cases
+    const rotationAxis = new THREE.Vector3().crossVectors(defaultDirection, direction).normalize();
+    const angle = Math.acos(defaultDirection.dot(direction));
+    quaternion.setFromAxisAngle(rotationAxis, angle);
+  }
   
   return (
-    <group ref={objRef}>
-      <mesh>
-        <cylinderGeometry args={[0.1, 0.1, 1, 8]} />
-        <meshStandardMaterial color={color} roughness={0.5} />
-      </mesh>
-    </group>
+    <mesh position={[midpoint.x, midpoint.y, midpoint.z]} quaternion={quaternion}>
+      <cylinderGeometry args={[0.1, 0.1, length, 8]} />
+      <meshStandardMaterial color={color} roughness={0.5} />
+    </mesh>
   );
 };
 
