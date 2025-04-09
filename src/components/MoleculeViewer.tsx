@@ -1,5 +1,5 @@
 
-import { useRef, useState, Suspense } from "react";
+import { useRef, useState, Suspense, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Sphere, Environment, PerspectiveCamera } from "@react-three/drei";
 import { Button } from "./ui/button";
@@ -36,50 +36,51 @@ const Bond = ({ start, end, color = "#888888" }: { start: [number, number, numbe
     (start[2] + end[2]) / 2
   ];
   
-  // Set up rotation on initial render
-  useFrame(() => {
+  useEffect(() => {
     if (meshRef.current) {
-      // Create a vector from the start to end positions
-      const start3 = new THREE.Vector3(start[0], start[1], start[2]);
-      const end3 = new THREE.Vector3(end[0], end[1], end[2]);
-      const direction = new THREE.Vector3().subVectors(end3, start3).normalize();
-      
-      // Set position to midpoint
+      // Position at midpoint
       meshRef.current.position.set(midpoint[0], midpoint[1], midpoint[2]);
       
-      // Set scale to stretch the cylinder to the right length (scaled on Y axis)
-      meshRef.current.scale.set(1, length, 1);
+      // Create vectors for start and end points
+      const startVec = new THREE.Vector3(start[0], start[1], start[2]);
+      const endVec = new THREE.Vector3(end[0], end[1], end[2]);
+      
+      // Calculate direction vector
+      const dir = new THREE.Vector3().subVectors(endVec, startVec).normalize();
+      
+      // Scale the cylinder to the right length
+      meshRef.current.scale.set(0.1, length, 0.1);
       
       // Default cylinder is aligned with Y-axis, we need to align it with our direction
-      // Create a quaternion that rotates from Y-axis to our direction
       const yAxis = new THREE.Vector3(0, 1, 0);
       
       // Special case: if direction is parallel to the Y axis
-      if (Math.abs(direction.y) > 0.99) {
-        // No rotation needed if pointing up
-        if (direction.y > 0) {
+      if (Math.abs(dir.y) > 0.99) {
+        if (dir.y > 0) {
+          // Already aligned with Y axis
           meshRef.current.rotation.set(0, 0, 0);
         } else {
-          // Rotate 180 degrees around X axis if pointing down
+          // Aligned with negative Y axis, rotate 180 degrees around X
           meshRef.current.rotation.set(Math.PI, 0, 0);
         }
       } else {
-        // For all other directions, use the cross product to find rotation axis
-        const rotationAxis = new THREE.Vector3().crossVectors(yAxis, direction).normalize();
-        const angle = Math.acos(yAxis.dot(direction));
+        // For all other directions
+        const rotationAxis = new THREE.Vector3().crossVectors(yAxis, dir).normalize();
+        const angle = Math.acos(yAxis.dot(dir));
         
-        // Set rotation using Euler angles instead of quaternion
-        // Convert the axis-angle to Euler angles
+        // Create a quaternion for the rotation and convert to Euler angles
         const quaternion = new THREE.Quaternion().setFromAxisAngle(rotationAxis, angle);
         const euler = new THREE.Euler().setFromQuaternion(quaternion);
+        
+        // Apply rotation
         meshRef.current.rotation.copy(euler);
       }
     }
-  });
+  }, [start, end, midpoint, length]);
   
   return (
     <mesh ref={meshRef}>
-      <cylinderGeometry args={[0.1, 0.1, 1, 8]} />
+      <cylinderGeometry args={[1, 1, 1, 8]} />
       <meshStandardMaterial color={color} roughness={0.5} />
     </mesh>
   );
