@@ -1,7 +1,7 @@
 
 import { useRef, useState, Suspense } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, Sphere, Cylinder, Environment, PerspectiveCamera } from "@react-three/drei";
+import { OrbitControls, Sphere, Environment, PerspectiveCamera } from "@react-three/drei";
 import { Button } from "./ui/button";
 import { Atom, Plus, Minus } from "lucide-react";
 import * as THREE from "three";
@@ -17,53 +17,112 @@ const AtomSphere = ({ position, color, scale = 1 }: { position: [number, number,
 
 // Bond component for connecting atoms
 const Bond = ({ start, end, color = "#888888" }: { start: [number, number, number]; end: [number, number, number]; color?: string }) => {
-  // Calculate midpoint directly
-  const midX = (start[0] + end[0]) / 2;
-  const midY = (start[1] + end[1]) / 2;
-  const midZ = (start[2] + end[2]) / 2;
+  // Create midpoint
+  const midpoint = [
+    (start[0] + end[0]) / 2,
+    (start[1] + end[1]) / 2,
+    (start[2] + end[2]) / 2
+  ];
   
-  // Calculate direction vector
-  const dirX = end[0] - start[0];
-  const dirY = end[1] - start[1];
-  const dirZ = end[2] - start[2];
+  // Create a cylinder that represents our bond
+  const bondRef = useRef<THREE.Mesh>(null);
   
-  // Calculate length
-  const length = Math.sqrt(dirX * dirX + dirY * dirY + dirZ * dirZ);
+  // Calculate direction and length
+  const direction = new THREE.Vector3(
+    end[0] - start[0],
+    end[1] - start[1], 
+    end[2] - start[2]
+  );
+  const length = direction.length();
   
-  // Create a simple implementation that uses basic Euler rotations
-  // This avoids serialization issues with quaternions
+  // We need to create a custom geometry for our bond instead of using the Cylinder component
+  // This helps avoid serialization issues
+  return (
+    <group position={[midpoint[0], midpoint[1], midpoint[2]]}>
+      <mesh ref={bondRef}>
+        <cylinderGeometry args={[0.1, 0.1, length, 8]} />
+        <meshStandardMaterial color={color} roughness={0.5} />
+      </mesh>
+    </group>
+  );
+};
+
+// Custom bond that handles its own rotation correctly
+const BondWithRotation = ({ start, end, color = "#888888" }: { start: [number, number, number]; end: [number, number, number]; color?: string }) => {
+  const meshRef = useRef<THREE.Mesh>(null);
   
-  // Simple approach: Use lookAt calculations but apply manually via Euler angles
-  const tempVec = new THREE.Vector3(dirX, dirY, dirZ).normalize();
-  const rotationEuler = new THREE.Euler();
-  
-  // Handle special case when aligned with Y axis
-  if (Math.abs(tempVec.y) > 0.99999) {
-    // Bond is parallel to Y axis
-    rotationEuler.set(tempVec.y > 0 ? 0 : Math.PI, 0, 0);
-  } else {
-    // Use a reliable method that doesn't involve quaternions directly
-    // Manually align cylinder (y-axis) with our direction vector
-    
-    // First, calculate phi (rotation around X axis)
-    const phi = Math.acos(tempVec.y);
-    
-    // Then calculate theta (rotation around Y axis)
-    const theta = Math.atan2(tempVec.z, tempVec.x);
-    
-    // Apply rotations in the correct order
-    rotationEuler.set(phi, 0, -theta);
-  }
-  
-  // Convert to array of numbers for the rotation prop
-  const rotationArray = [rotationEuler.x, rotationEuler.y, rotationEuler.z];
+  // Set up the bond once it's mounted
+  useFrame(() => {
+    if (meshRef.current) {
+      // Calculate direction vector
+      const direction = new THREE.Vector3(
+        end[0] - start[0],
+        end[1] - start[1],
+        end[2] - start[2]
+      );
+      
+      // Position at midpoint
+      const midpoint = new THREE.Vector3(
+        (start[0] + end[0]) / 2,
+        (start[1] + end[1]) / 2,
+        (start[2] + end[2]) / 2
+      );
+      meshRef.current.position.copy(midpoint);
+      
+      // Orient the cylinder (which defaults to being aligned with the Y-axis)
+      // We need to rotate it to align with our direction vector
+      
+      // First, set the quaternion to identity (no rotation)
+      meshRef.current.quaternion.identity();
+      
+      // Create a temporary up vector (the cylinder's default orientation is along the Y-axis)
+      const up = new THREE.Vector3(0, 1, 0);
+      
+      // Calculate the axis and angle to rotate from the up vector to our direction
+      direction.normalize(); // Normalize to get just the direction
+      
+      // Handle special case when direction is parallel to up vector
+      if (Math.abs(direction.y) > 0.99999) {
+        // If pointing exactly up or down, use a simplified rotation
+        if (direction.y < 0) {
+          // If pointing down, rotate 180 degrees around X
+          meshRef.current.rotateX(Math.PI);
+        }
+        // If pointing up, no rotation needed
+      } else {
+        // For all other cases, we create a quaternion that rotates from up to direction
+        const quaternion = new THREE.Quaternion();
+        const axis = new THREE.Vector3();
+        
+        // Cross product gives us the axis of rotation
+        axis.crossVectors(up, direction).normalize();
+        
+        // The angle between up and direction
+        const angle = Math.acos(up.dot(direction));
+        
+        // Set quaternion from axis and angle
+        quaternion.setFromAxisAngle(axis, angle);
+        
+        // Apply the rotation
+        meshRef.current.quaternion.copy(quaternion);
+      }
+      
+      // Set the scale to make the cylinder the right length
+      const length = new THREE.Vector3(
+        end[0] - start[0],
+        end[1] - start[1],
+        end[2] - start[2]
+      ).length();
+      
+      meshRef.current.scale.set(1, length, 1);
+    }
+  });
   
   return (
-    <group position={[midX, midY, midZ]}>
-      <Cylinder args={[0.1, 0.1, length, 8]} rotation={rotationArray as [number, number, number]}>
-        <meshStandardMaterial color={color} roughness={0.5} />
-      </Cylinder>
-    </group>
+    <mesh ref={meshRef}>
+      <cylinderGeometry args={[0.1, 0.1, 1, 8]} />
+      <meshStandardMaterial color={color} roughness={0.5} />
+    </mesh>
   );
 };
 
@@ -89,8 +148,8 @@ const WaterMolecule = ({ rotate }: { rotate: boolean }) => {
       <AtomSphere position={[1.2, 0.8, 0]} color="#ffffff" scale={0.8} />
       
       {/* Bonds */}
-      <Bond start={[0, 0, 0]} end={[-1.2, 0.8, 0]} />
-      <Bond start={[0, 0, 0]} end={[1.2, 0.8, 0]} />
+      <BondWithRotation start={[0, 0, 0]} end={[-1.2, 0.8, 0]} />
+      <BondWithRotation start={[0, 0, 0]} end={[1.2, 0.8, 0]} />
     </group>
   );
 };
@@ -118,10 +177,10 @@ const MethaneMolecule = ({ rotate }: { rotate: boolean }) => {
       <AtomSphere position={[-1, 1, -1]} color="#ffffff" scale={0.8} />
       
       {/* Bonds */}
-      <Bond start={[0, 0, 0]} end={[1, 1, 1]} />
-      <Bond start={[0, 0, 0]} end={[-1, -1, 1]} />
-      <Bond start={[0, 0, 0]} end={[1, -1, -1]} />
-      <Bond start={[0, 0, 0]} end={[-1, 1, -1]} />
+      <BondWithRotation start={[0, 0, 0]} end={[1, 1, 1]} />
+      <BondWithRotation start={[0, 0, 0]} end={[-1, -1, 1]} />
+      <BondWithRotation start={[0, 0, 0]} end={[1, -1, -1]} />
+      <BondWithRotation start={[0, 0, 0]} end={[-1, 1, -1]} />
     </group>
   );
 };
