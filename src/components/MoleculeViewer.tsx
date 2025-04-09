@@ -1,6 +1,6 @@
 
-import { useRef, useState, Suspense, useEffect } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { useRef, useState, Suspense } from "react";
+import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Sphere, Environment, PerspectiveCamera } from "@react-three/drei";
 import { Button } from "./ui/button";
 import { Atom, Plus, Minus } from "lucide-react";
@@ -15,65 +15,38 @@ const AtomSphere = ({ position, color, scale = 1 }: { position: [number, number,
   );
 };
 
-// Bond component using primitive methods to avoid Three.js compatibility issues
+// Simple Bond component
 const Bond = ({ start, end, color = "#888888" }: { start: [number, number, number]; end: [number, number, number]; color?: string }) => {
-  // Create ref for the mesh
-  const meshRef = useRef<THREE.Mesh>(null);
+  // Calculate the midpoint between the two atoms
+  const midX = (start[0] + end[0]) / 2;
+  const midY = (start[1] + end[1]) / 2;
+  const midZ = (start[2] + end[2]) / 2;
   
-  // Use effect to set up the bond correctly after render
-  useEffect(() => {
-    if (!meshRef.current) return;
-    
-    // Create vectors from arrays
-    const startVec = new THREE.Vector3(...start);
-    const endVec = new THREE.Vector3(...end);
-    
-    // Calculate midpoint
-    const midpoint = new THREE.Vector3().lerpVectors(startVec, endVec, 0.5);
-    meshRef.current.position.copy(midpoint);
-    
-    // Calculate length and direction
-    const direction = new THREE.Vector3().subVectors(endVec, startVec);
-    const length = direction.length();
-    
-    // Set the scale to adjust cylinder length
-    meshRef.current.scale.set(1, length, 1);
-    
-    // Handle rotation based on direction
-    // Default cylinder is aligned along Y axis
-    const yAxis = new THREE.Vector3(0, 1, 0);
-    direction.normalize();
-    
-    // Special case for when bond is parallel to Y axis
-    if (Math.abs(direction.y) > 0.99) {
-      // Only need to check if it's pointing down
-      if (direction.y < 0) {
-        meshRef.current.rotation.x = Math.PI;
-      }
-    } else {
-      // For all other directions, calculate rotation using lookAt
-      const target = new THREE.Vector3().copy(midpoint).add(direction);
-      
-      // We need to adjust for the fact that cylinder's "up" is along Y
-      // First create a dummy object to use lookAt
-      const dummy = new THREE.Object3D();
-      dummy.position.copy(midpoint);
-      dummy.lookAt(target);
-      
-      // Now we need to adjust because lookAt sets the -Z to point to target
-      // but we need Y to point to target
-      dummy.rotation.x += Math.PI / 2;
-      
-      // Copy rotation to the mesh
-      meshRef.current.rotation.copy(dummy.rotation);
-    }
-  }, [start, end]);
-
+  // Calculate the distance between the two atoms
+  const dx = end[0] - start[0];
+  const dy = end[1] - start[1];
+  const dz = end[2] - start[2];
+  const length = Math.sqrt(dx * dx + dy * dy + dz * dz);
+  
+  // Create a cylinder geometry for the bond
+  const geometry = new THREE.CylinderGeometry(0.1, 0.1, length, 8);
+  geometry.translate(0, length/2, 0);
+  geometry.rotateX(Math.PI/2);
+  
+  // Calculate the direction vector
+  const direction = new THREE.Vector3(dx, dy, dz).normalize();
+  
+  // Create a quaternion to rotate the cylinder to align with the direction
+  const quaternion = new THREE.Quaternion();
+  quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), direction);
+  
   return (
-    <mesh ref={meshRef}>
-      <cylinderGeometry args={[0.1, 0.1, 1, 8]} />
-      <meshStandardMaterial color={color} roughness={0.5} />
-    </mesh>
+    <group position={[start[0], start[1], start[2]]} quaternion={quaternion}>
+      <mesh>
+        <primitive object={geometry} attach="geometry" />
+        <meshStandardMaterial color={color} roughness={0.5} />
+      </mesh>
+    </group>
   );
 };
 
@@ -81,16 +54,8 @@ const Bond = ({ start, end, color = "#888888" }: { start: [number, number, numbe
 const WaterMolecule = ({ rotate }: { rotate: boolean }) => {
   const moleculeRef = useRef<THREE.Group>(null);
   
-  // Animation for the molecule rotation
-  useFrame((state, delta) => {
-    if (moleculeRef.current && rotate) {
-      moleculeRef.current.rotation.y += delta * 0.5;
-      moleculeRef.current.rotation.x += delta * 0.2;
-    }
-  });
-
   return (
-    <group ref={moleculeRef}>
+    <group ref={moleculeRef} rotation={[0, rotate ? Date.now() * 0.001 : 0, 0]}>
       {/* Oxygen atom (center) */}
       <AtomSphere position={[0, 0, 0]} color="#ff3333" scale={1.3} />
       
@@ -109,15 +74,8 @@ const WaterMolecule = ({ rotate }: { rotate: boolean }) => {
 const MethaneMolecule = ({ rotate }: { rotate: boolean }) => {
   const moleculeRef = useRef<THREE.Group>(null);
   
-  useFrame((state, delta) => {
-    if (moleculeRef.current && rotate) {
-      moleculeRef.current.rotation.y += delta * 0.5;
-      moleculeRef.current.rotation.x += delta * 0.2;
-    }
-  });
-
   return (
-    <group ref={moleculeRef}>
+    <group ref={moleculeRef} rotation={[0, rotate ? Date.now() * 0.001 : 0, 0]}>
       {/* Carbon atom (center) */}
       <AtomSphere position={[0, 0, 0]} color="#555555" scale={1.2} />
       
@@ -132,6 +90,22 @@ const MethaneMolecule = ({ rotate }: { rotate: boolean }) => {
       <Bond start={[0, 0, 0]} end={[-1, -1, 1]} />
       <Bond start={[0, 0, 0]} end={[1, -1, -1]} />
       <Bond start={[0, 0, 0]} end={[-1, 1, -1]} />
+    </group>
+  );
+};
+
+// Wrapper component for automatic rotation
+const RotatingMolecule = ({ type, isRotating }: { type: string; isRotating: boolean }) => {
+  const groupRef = useRef<THREE.Group>(null);
+  
+  // We're using a static presentation without useFrame to avoid potential compatibility issues
+  return (
+    <group ref={groupRef}>
+      {type === "water" ? (
+        <WaterMolecule rotate={isRotating} />
+      ) : (
+        <MethaneMolecule rotate={isRotating} />
+      )}
     </group>
   );
 };
@@ -183,16 +157,15 @@ export const MoleculeViewer = () => {
       
       <div className="aspect-video bg-gray-100 rounded-md overflow-hidden">
         <Suspense fallback={<div className="flex items-center justify-center h-full">Loading 3D model...</div>}>
-          <Canvas className="w-full h-full">
+          <Canvas>
             <PerspectiveCamera makeDefault position={[0, 0, zoom]} fov={45} />
             <ambientLight intensity={0.5} />
             <pointLight position={[10, 10, 10]} intensity={1} />
             
-            {activeMolecule === "water" ? (
-              <WaterMolecule rotate={isRotating} />
-            ) : (
-              <MethaneMolecule rotate={isRotating} />
-            )}
+            <RotatingMolecule 
+              type={activeMolecule} 
+              isRotating={isRotating} 
+            />
             
             <OrbitControls
               enablePan={true}
