@@ -1,5 +1,5 @@
 
-import { useRef, useState, Suspense } from "react";
+import { useRef, useState, Suspense, useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Sphere, Environment, PerspectiveCamera } from "@react-three/drei";
 import { Button } from "./ui/button";
@@ -15,47 +15,80 @@ const AtomSphere = ({ position, color, scale = 1 }: { position: [number, number,
   );
 };
 
-// Simple Bond component
+// Simplified Bond component that uses a cylinder directly
 const Bond = ({ start, end, color = "#888888" }: { start: [number, number, number]; end: [number, number, number]; color?: string }) => {
-  // Calculate the midpoint between the two atoms
-  const midX = (start[0] + end[0]) / 2;
-  const midY = (start[1] + end[1]) / 2;
-  const midZ = (start[2] + end[2]) / 2;
+  const bondRef = useRef<THREE.Mesh>(null);
   
-  // Calculate the distance between the two atoms
-  const dx = end[0] - start[0];
-  const dy = end[1] - start[1];
-  const dz = end[2] - start[2];
-  const length = Math.sqrt(dx * dx + dy * dy + dz * dz);
-  
-  // Create a cylinder geometry for the bond
-  const geometry = new THREE.CylinderGeometry(0.1, 0.1, length, 8);
-  geometry.translate(0, length/2, 0);
-  geometry.rotateX(Math.PI/2);
-  
-  // Calculate the direction vector
-  const direction = new THREE.Vector3(dx, dy, dz).normalize();
-  
-  // Create a quaternion to rotate the cylinder to align with the direction
-  const quaternion = new THREE.Quaternion();
-  quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), direction);
-  
+  useEffect(() => {
+    if (!bondRef.current) return;
+    
+    // Calculate the midpoint
+    const midpoint = new THREE.Vector3(
+      (start[0] + end[0]) / 2,
+      (start[1] + end[1]) / 2,
+      (start[2] + end[2]) / 2
+    );
+    
+    // Set position to midpoint
+    bondRef.current.position.set(midpoint.x, midpoint.y, midpoint.z);
+    
+    // Calculate bond length
+    const direction = new THREE.Vector3(
+      end[0] - start[0],
+      end[1] - start[1],
+      end[2] - start[2]
+    );
+    const length = direction.length();
+    
+    // Scale the cylinder to match the bond length
+    bondRef.current.scale.y = length;
+    
+    // Orient the cylinder
+    direction.normalize();
+    
+    // Default cylinder orientation is along the Y-axis
+    // We need to align it with our direction vector
+    const defaultDirection = new THREE.Vector3(0, 1, 0);
+    
+    // Handle the case when direction is parallel to the default direction
+    if (Math.abs(direction.y) > 0.99) {
+      // Almost parallel to Y-axis, use a different rotation approach
+      const sign = Math.sign(direction.y);
+      bondRef.current.rotation.set(0, 0, 0);
+      bondRef.current.scale.y = length * sign;
+    } else {
+      // For other cases, use the standard approach
+      const quaternion = new THREE.Quaternion();
+      quaternion.setFromUnitVectors(defaultDirection, direction);
+      bondRef.current.setRotationFromQuaternion(quaternion);
+    }
+  }, [start, end]);
+
   return (
-    <group position={[start[0], start[1], start[2]]} quaternion={quaternion}>
-      <mesh>
-        <primitive object={geometry} attach="geometry" />
-        <meshStandardMaterial color={color} roughness={0.5} />
-      </mesh>
-    </group>
+    <mesh ref={bondRef}>
+      <cylinderGeometry args={[0.1, 0.1, 1, 8]} />
+      <meshStandardMaterial color={color} roughness={0.5} />
+    </mesh>
   );
 };
 
-// Rotating molecule model - H₂O (water)
+// Simple component for water molecule that doesn't rely on dynamic dates for rotation
 const WaterMolecule = ({ rotate }: { rotate: boolean }) => {
-  const moleculeRef = useRef<THREE.Group>(null);
+  const groupRef = useRef<THREE.Group>(null);
+  const [rotation, setRotation] = useState(0);
+  
+  useEffect(() => {
+    if (!rotate) return;
+    
+    const interval = setInterval(() => {
+      setRotation((prev) => prev + 0.01);
+    }, 16);
+    
+    return () => clearInterval(interval);
+  }, [rotate]);
   
   return (
-    <group ref={moleculeRef} rotation={[0, rotate ? Date.now() * 0.001 : 0, 0]}>
+    <group ref={groupRef} rotation={[0, rotation, 0]}>
       {/* Oxygen atom (center) */}
       <AtomSphere position={[0, 0, 0]} color="#ff3333" scale={1.3} />
       
@@ -72,10 +105,21 @@ const WaterMolecule = ({ rotate }: { rotate: boolean }) => {
 
 // Methane molecule (CH₄)
 const MethaneMolecule = ({ rotate }: { rotate: boolean }) => {
-  const moleculeRef = useRef<THREE.Group>(null);
+  const groupRef = useRef<THREE.Group>(null);
+  const [rotation, setRotation] = useState(0);
+  
+  useEffect(() => {
+    if (!rotate) return;
+    
+    const interval = setInterval(() => {
+      setRotation((prev) => prev + 0.01);
+    }, 16);
+    
+    return () => clearInterval(interval);
+  }, [rotate]);
   
   return (
-    <group ref={moleculeRef} rotation={[0, rotate ? Date.now() * 0.001 : 0, 0]}>
+    <group ref={groupRef} rotation={[0, rotation, 0]}>
       {/* Carbon atom (center) */}
       <AtomSphere position={[0, 0, 0]} color="#555555" scale={1.2} />
       
@@ -94,13 +138,10 @@ const MethaneMolecule = ({ rotate }: { rotate: boolean }) => {
   );
 };
 
-// Wrapper component for automatic rotation
-const RotatingMolecule = ({ type, isRotating }: { type: string; isRotating: boolean }) => {
-  const groupRef = useRef<THREE.Group>(null);
-  
-  // We're using a static presentation without useFrame to avoid potential compatibility issues
+// Wrapper component for molecule
+const MoleculeWrapper = ({ type, isRotating }: { type: string; isRotating: boolean }) => {
   return (
-    <group ref={groupRef}>
+    <group>
       {type === "water" ? (
         <WaterMolecule rotate={isRotating} />
       ) : (
@@ -162,7 +203,7 @@ export const MoleculeViewer = () => {
             <ambientLight intensity={0.5} />
             <pointLight position={[10, 10, 10]} intensity={1} />
             
-            <RotatingMolecule 
+            <MoleculeWrapper 
               type={activeMolecule} 
               isRotating={isRotating} 
             />
