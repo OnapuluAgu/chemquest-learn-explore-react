@@ -1,5 +1,5 @@
 
-import { useRef, useState, Suspense, useEffect } from "react";
+import { useRef, useState, Suspense } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Sphere, Environment, PerspectiveCamera } from "@react-three/drei";
 import { Button } from "./ui/button";
@@ -19,64 +19,57 @@ const AtomSphere = ({ position, color, scale = 1 }: { position: [number, number,
 const Bond = ({ start, end, color = "#888888" }: { start: [number, number, number]; end: [number, number, number]; color?: string }) => {
   const meshRef = useRef<THREE.Mesh>(null);
   
-  // Calculate direction vector
-  const direction = new THREE.Vector3(
-    end[0] - start[0],
-    end[1] - start[1],
-    end[2] - start[2]
-  );
-  
-  // Calculate length
-  const length = direction.length();
-  
-  // Calculate midpoint
-  const midpoint: [number, number, number] = [
-    (start[0] + end[0]) / 2,
-    (start[1] + end[1]) / 2,
-    (start[2] + end[2]) / 2
-  ];
-  
-  useEffect(() => {
+  // Create a simple cylinder geometry
+  useFrame(() => {
     if (meshRef.current) {
-      // Position at midpoint
-      meshRef.current.position.set(midpoint[0], midpoint[1], midpoint[2]);
+      // Calculate the midpoint between start and end
+      const midpoint = new THREE.Vector3(
+        (start[0] + end[0]) / 2,
+        (start[1] + end[1]) / 2,
+        (start[2] + end[2]) / 2
+      );
       
-      // Create vectors for start and end points
+      // Set position to midpoint
+      meshRef.current.position.set(midpoint.x, midpoint.y, midpoint.z);
+      
+      // Calculate the distance between start and end
       const startVec = new THREE.Vector3(start[0], start[1], start[2]);
       const endVec = new THREE.Vector3(end[0], end[1], end[2]);
+      const distance = startVec.distanceTo(endVec);
       
-      // Calculate direction vector
-      const dir = new THREE.Vector3().subVectors(endVec, startVec).normalize();
+      // Calculate the direction from start to end
+      const direction = new THREE.Vector3().subVectors(endVec, startVec).normalize();
       
-      // Scale the cylinder to the right length
-      meshRef.current.scale.set(0.1, length, 0.1);
+      // Apply scale to make the cylinder stretch between points
+      // Scale only the Y axis (height) to match the distance
+      meshRef.current.scale.set(0.1, distance, 0.1);
       
-      // Default cylinder is aligned with Y-axis, we need to align it with our direction
-      const yAxis = new THREE.Vector3(0, 1, 0);
+      // Align the cylinder with the direction vector
+      // Default cylinder is along the Y axis, so we need to rotate it
       
-      // Special case: if direction is parallel to the Y axis
-      if (Math.abs(dir.y) > 0.99) {
-        if (dir.y > 0) {
-          // Already aligned with Y axis
-          meshRef.current.rotation.set(0, 0, 0);
-        } else {
-          // Aligned with negative Y axis, rotate 180 degrees around X
-          meshRef.current.rotation.set(Math.PI, 0, 0);
-        }
-      } else {
-        // For all other directions
-        const rotationAxis = new THREE.Vector3().crossVectors(yAxis, dir).normalize();
-        const angle = Math.acos(yAxis.dot(dir));
-        
-        // Create a quaternion for the rotation and convert to Euler angles
-        const quaternion = new THREE.Quaternion().setFromAxisAngle(rotationAxis, angle);
-        const euler = new THREE.Euler().setFromQuaternion(quaternion);
-        
-        // Apply rotation
-        meshRef.current.rotation.copy(euler);
-      }
+      // For simple alignment we use lookAt
+      // First we need to create a proper rotation orientation
+      // Create a dummy object positioned at the midpoint
+      const dummy = new THREE.Object3D();
+      dummy.position.copy(midpoint);
+      
+      // Point the dummy to look at the end point
+      // We use a point slightly past the end to ensure proper orientation
+      const lookTarget = new THREE.Vector3().copy(endVec).add(direction);
+      dummy.lookAt(lookTarget);
+      
+      // Apply the rotation, specifically for a cylinder along Y axis
+      // We need to rotate 90 degrees on X to align with the direction
+      dummy.rotation.x = Math.PI / 2;
+      
+      // Apply the dummy's rotation to our cylinder
+      meshRef.current.rotation.set(
+        dummy.rotation.x,
+        dummy.rotation.y,
+        dummy.rotation.z
+      );
     }
-  }, [start, end, midpoint, length]);
+  });
   
   return (
     <mesh ref={meshRef}>
