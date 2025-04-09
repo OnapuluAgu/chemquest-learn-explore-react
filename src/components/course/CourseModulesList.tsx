@@ -7,7 +7,7 @@ interface CourseModulesListProps {
   courseId: string;
   moduleProgress: Record<string, { progress: number, completed: boolean }>;
   isModuleLocked: (index: number) => boolean;
-  getModuleStatus: (progress: number | null, completed: boolean | null) => string;
+  getModuleStatus: (progress: number | null, completed: boolean | null) => "not-started" | "in-progress" | "completed";
 }
 
 export const CourseModulesList = ({ 
@@ -25,6 +25,7 @@ export const CourseModulesList = ({
         {modules.map((module, index) => {
           const moduleData = moduleProgress[module.id] || { progress: 0, completed: false };
           const locked = isModuleLocked(index);
+          // Fixed: Convert the string status to the correct type
           const status = locked 
             ? "not-started" 
             : getModuleStatus(moduleData.progress, moduleData.completed);

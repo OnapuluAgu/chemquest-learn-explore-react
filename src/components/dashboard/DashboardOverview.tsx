@@ -29,6 +29,7 @@ interface CourseItem {
   };
   lastAccessed: string;
   nextModuleId: string | null;
+  progress: number; // Added the missing progress property
 }
 
 interface DashboardOverviewProps {
