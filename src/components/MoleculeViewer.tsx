@@ -1,4 +1,3 @@
-
 import { useRef, useState, Suspense, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Sphere, Environment, PerspectiveCamera } from "@react-three/drei";
@@ -15,7 +14,7 @@ const AtomSphere = ({ position, color, scale = 1 }: { position: [number, number,
   );
 };
 
-// Bond component using primitive cylinder - completely rewritten
+// Bond component using primitive cylinder - fixed to avoid modifying read-only property
 const Bond = ({ start, end, color = "#888888" }: { start: [number, number, number]; end: [number, number, number]; color?: string }) => {
   const meshRef = useRef<THREE.Mesh>(null);
   
@@ -39,10 +38,6 @@ const Bond = ({ start, end, color = "#888888" }: { start: [number, number, numbe
       const direction = new THREE.Vector3();
       direction.subVectors(endVec, startVec).normalize();
       
-      // Create orientation matrix
-      // We're aligning our cylinder with the direction vector
-      const matrix = new THREE.Matrix4();
-      
       // Up vector (cylinder is aligned along Y by default)
       const up = new THREE.Vector3(0, 1, 0);
       
@@ -54,9 +49,10 @@ const Bond = ({ start, end, color = "#888888" }: { start: [number, number, numbe
         // Calculate rotation angle
         const angle = Math.acos(up.dot(direction));
         
-        // Set the rotation
-        matrix.makeRotationAxis(axis, angle);
-        meshRef.current.setRotationFromMatrix(matrix);
+        // Set the rotation using Euler angles
+        meshRef.current.rotation.set(0, 0, 0); // Reset rotation
+        const rotationAxis = new THREE.Vector3().crossVectors(up, direction).normalize();
+        meshRef.current.rotateOnAxis(rotationAxis, angle);
       } else {
         // When aligned with Y axis, handle the special case
         if (direction.y < 0) {
@@ -65,13 +61,9 @@ const Bond = ({ start, end, color = "#888888" }: { start: [number, number, numbe
         }
       }
       
-      // Update the geometry
-      // Set scale directly on the cylinder geometry to match bond length
-      if (meshRef.current.geometry instanceof THREE.CylinderGeometry) {
-        // Update height parameter
-        meshRef.current.geometry.parameters.height = distance;
-        meshRef.current.scale.y = distance;
-      }
+      // Scale the cylinder to match the bond length
+      // Don't try to modify the geometry parameters directly
+      meshRef.current.scale.y = distance;
     }
   }, [start, end]);
   
