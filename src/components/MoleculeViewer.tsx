@@ -1,5 +1,5 @@
 
-import { useRef, useState, Suspense } from "react";
+import { useRef, useState, Suspense, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Sphere, Environment, PerspectiveCamera } from "@react-three/drei";
 import { Button } from "./ui/button";
@@ -15,65 +15,43 @@ const AtomSphere = ({ position, color, scale = 1 }: { position: [number, number,
   );
 };
 
-// Simplified Bond component for connecting atoms
+// Simplified Bond component for connecting atoms using a simple cylinder
 const Bond = ({ start, end, color = "#888888" }: { start: [number, number, number]; end: [number, number, number]; color?: string }) => {
-  const meshRef = useRef<THREE.Mesh>(null);
+  // Create vectors for calculations
+  const startVec = new THREE.Vector3(start[0], start[1], start[2]);
+  const endVec = new THREE.Vector3(end[0], end[1], end[2]);
   
-  // Create a simple cylinder geometry
-  useFrame(() => {
-    if (meshRef.current) {
-      // Calculate the midpoint between start and end
-      const midpoint = new THREE.Vector3(
-        (start[0] + end[0]) / 2,
-        (start[1] + end[1]) / 2,
-        (start[2] + end[2]) / 2
-      );
-      
-      // Set position to midpoint
-      meshRef.current.position.set(midpoint.x, midpoint.y, midpoint.z);
-      
-      // Calculate the distance between start and end
-      const startVec = new THREE.Vector3(start[0], start[1], start[2]);
-      const endVec = new THREE.Vector3(end[0], end[1], end[2]);
-      const distance = startVec.distanceTo(endVec);
-      
-      // Calculate the direction from start to end
-      const direction = new THREE.Vector3().subVectors(endVec, startVec).normalize();
-      
-      // Apply scale to make the cylinder stretch between points
-      // Scale only the Y axis (height) to match the distance
-      meshRef.current.scale.set(0.1, distance, 0.1);
-      
-      // Align the cylinder with the direction vector
-      // Default cylinder is along the Y axis, so we need to rotate it
-      
-      // For simple alignment we use lookAt
-      // First we need to create a proper rotation orientation
-      // Create a dummy object positioned at the midpoint
-      const dummy = new THREE.Object3D();
-      dummy.position.copy(midpoint);
-      
-      // Point the dummy to look at the end point
-      // We use a point slightly past the end to ensure proper orientation
-      const lookTarget = new THREE.Vector3().copy(endVec).add(direction);
-      dummy.lookAt(lookTarget);
-      
-      // Apply the rotation, specifically for a cylinder along Y axis
-      // We need to rotate 90 degrees on X to align with the direction
-      dummy.rotation.x = Math.PI / 2;
-      
-      // Apply the dummy's rotation to our cylinder
-      meshRef.current.rotation.set(
-        dummy.rotation.x,
-        dummy.rotation.y,
-        dummy.rotation.z
-      );
+  // Calculate midpoint
+  const midpoint = new THREE.Vector3().addVectors(startVec, endVec).multiplyScalar(0.5);
+  
+  // Calculate distance between points (bond length)
+  const distance = startVec.distanceTo(endVec);
+  
+  // Calculate direction for the cylinder orientation
+  const direction = new THREE.Vector3().subVectors(endVec, startVec).normalize();
+  
+  // Create a quaternion for the rotation
+  // Default cylinder is along Y-axis, so we need to find rotation from Y to our direction
+  const quaternion = new THREE.Quaternion();
+  const upVector = new THREE.Vector3(0, 1, 0);
+  
+  // Handle special case when bond is parallel to Y axis
+  if (Math.abs(direction.dot(upVector)) > 0.99) {
+    // If pointing down, rotate 180 degrees around X
+    if (direction.y < 0) {
+      quaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI);
     }
-  });
+  } else {
+    // For all other cases, find the rotation from Y to our direction
+    quaternion.setFromUnitVectors(upVector, direction);
+  }
+  
+  // Convert quaternion to euler angles for the cylinder rotation
+  const euler = new THREE.Euler().setFromQuaternion(quaternion);
   
   return (
-    <mesh ref={meshRef}>
-      <cylinderGeometry args={[1, 1, 1, 8]} />
+    <mesh position={[midpoint.x, midpoint.y, midpoint.z]} rotation={euler}>
+      <cylinderGeometry args={[0.1, 0.1, distance, 8]} />
       <meshStandardMaterial color={color} roughness={0.5} />
     </mesh>
   );
