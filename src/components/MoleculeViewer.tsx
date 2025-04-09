@@ -5,7 +5,6 @@ import { OrbitControls, Sphere, Cylinder, Environment, PerspectiveCamera } from 
 import { Button } from "./ui/button";
 import { Atom, Plus, Minus } from "lucide-react";
 import * as THREE from "three";
-import { Vector3 } from "three";
 
 // Atom component for the molecule
 const AtomSphere = ({ position, color, scale = 1 }: { position: [number, number, number]; color: string; scale?: number }) => {
@@ -18,29 +17,42 @@ const AtomSphere = ({ position, color, scale = 1 }: { position: [number, number,
 
 // Bond component for connecting atoms
 const Bond = ({ start, end, color = "#888888" }: { start: [number, number, number]; end: [number, number, number]; color?: string }) => {
-  const startVec = new THREE.Vector3(start[0], start[1], start[2]);
-  const endVec = new THREE.Vector3(end[0], end[1], end[2]);
+  // Calculate midpoint directly
+  const midX = (start[0] + end[0]) / 2;
+  const midY = (start[1] + end[1]) / 2;
+  const midZ = (start[2] + end[2]) / 2;
   
-  // Calculate midpoint
-  const midPoint = new THREE.Vector3().addVectors(startVec, endVec).multiplyScalar(0.5);
+  // Calculate the direction
+  const dirX = end[0] - start[0];
+  const dirY = end[1] - start[1];
+  const dirZ = end[2] - start[2];
   
-  // Calculate direction and length
-  const direction = new THREE.Vector3().subVectors(endVec, startVec);
-  const length = direction.length();
+  // Calculate the bond length
+  const length = Math.sqrt(dirX * dirX + dirY * dirY + dirZ * dirZ);
   
-  // Create quaternion for rotation
-  const quaternion = new THREE.Quaternion();
-  const up = new THREE.Vector3(0, 1, 0);
+  // Create a direction vector and normalize it
+  const dir = new THREE.Vector3(dirX, dirY, dirZ).normalize();
   
-  // Normalize the direction vector
-  direction.normalize();
+  // Create a rotation that aligns the cylinder with the direction
+  const rotation = new THREE.Euler();
   
-  // Create quaternion from the up vector to the direction
-  quaternion.setFromUnitVectors(up, direction);
+  // Default cylinder in drei is aligned with Y-axis, so we need to align it with our direction
+  if (Math.abs(dir.y) > 0.99999) {
+    // Special case when direction is parallel to Y axis
+    rotation.set(dir.y > 0 ? 0 : Math.PI, 0, 0);
+  } else {
+    // Find perpendicular vector to Y and direction
+    const axis = new THREE.Vector3(0, 1, 0).cross(dir).normalize();
+    // Calculate angle between Y and direction
+    const angle = Math.acos(dir.y);
+    // Create quaternion and convert to Euler
+    const quaternion = new THREE.Quaternion().setFromAxisAngle(axis, angle);
+    rotation.setFromQuaternion(quaternion);
+  }
   
   return (
-    <group position={[midPoint.x, midPoint.y, midPoint.z]} quaternion={quaternion}>
-      <Cylinder args={[0.1, 0.1, length, 8]} rotation={[Math.PI / 2, 0, 0]}>
+    <group position={[midX, midY, midZ]}>
+      <Cylinder args={[0.1, 0.1, length, 8]} rotation={rotation.toArray() as [number, number, number]}>
         <meshStandardMaterial color={color} roughness={0.5} />
       </Cylinder>
     </group>
