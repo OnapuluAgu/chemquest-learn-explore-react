@@ -12,6 +12,7 @@ import { getModuleById } from "@/lib/api";
 import { VirtualLabPreview } from "@/components/VirtualLabPreview";
 import { useModuleProgress } from "@/hooks/useModuleProgress";
 import { PeriodicTableInteractive } from "@/components/PeriodicTableInteractive";
+import { MoleculeViewer } from "@/components/MoleculeViewer";
 
 interface InteractiveProps {
   interactiveType?: "molecule" | "periodic-table" | "chemical-reaction";
@@ -84,23 +85,7 @@ const ModuleInteractivePage = ({ interactiveType: propType }: InteractiveProps) 
     
     switch(interactiveType) {
       case "molecule":
-        return (
-          <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-            <h2 className="text-xl font-semibold mb-4">3D Molecule Viewer</h2>
-            <div className="aspect-video bg-gray-100 rounded-md flex items-center justify-center">
-              <div className="text-center p-6">
-                <Atom className="h-16 w-16 mx-auto text-chemistry-purple mb-4" />
-                <h3 className="text-lg font-medium mb-2">Interactive 3D Molecule</h3>
-                <p className="text-gray-600 max-w-md mx-auto mb-4">
-                  Explore chemical structures in 3D space. Rotate, zoom, and examine bond angles.
-                </p>
-                <Button className="bg-chemistry-purple">
-                  Rotate Molecule
-                </Button>
-              </div>
-            </div>
-          </div>
-        );
+        return <MoleculeViewer />;
         
       case "periodic-table":
         return <PeriodicTableInteractive />;
