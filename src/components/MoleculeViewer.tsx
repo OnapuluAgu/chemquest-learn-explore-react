@@ -4,9 +4,10 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Sphere, Cylinder, Environment, PerspectiveCamera } from "@react-three/drei";
 import { Button } from "./ui/button";
 import { Atom, Plus, Minus } from "lucide-react";
+import { Vector3 } from "three";
 
 // Atom component for the molecule
-const AtomSphere = ({ position, color, scale = 1 }) => {
+const AtomSphere = ({ position, color, scale = 1 }: { position: [number, number, number]; color: string; scale?: number }) => {
   return (
     <Sphere args={[0.5 * scale, 16, 16]} position={position}>
       <meshStandardMaterial color={color} roughness={0.2} metalness={0.3} />
@@ -15,8 +16,8 @@ const AtomSphere = ({ position, color, scale = 1 }) => {
 };
 
 // Bond component for connecting atoms
-const Bond = ({ start, end, color = "#888888" }) => {
-  const midPoint = [(start[0] + end[0]) / 2, (start[1] + end[1]) / 2, (start[2] + end[2]) / 2];
+const Bond = ({ start, end, color = "#888888" }: { start: [number, number, number]; end: [number, number, number]; color?: string }) => {
+  const midPoint: [number, number, number] = [(start[0] + end[0]) / 2, (start[1] + end[1]) / 2, (start[2] + end[2]) / 2];
   
   // Calculate direction vector
   const direction = [end[0] - start[0], end[1] - start[1], end[2] - start[2]];
@@ -38,8 +39,8 @@ const Bond = ({ start, end, color = "#888888" }) => {
 };
 
 // Rotating molecule model - H₂O (water)
-const WaterMolecule = ({ rotate }) => {
-  const moleculeRef = useRef();
+const WaterMolecule = ({ rotate }: { rotate: boolean }) => {
+  const moleculeRef = useRef<THREE.Group>(null);
   
   // Animation for the molecule rotation
   useFrame((state, delta) => {
@@ -66,8 +67,8 @@ const WaterMolecule = ({ rotate }) => {
 };
 
 // Methane molecule (CH₄)
-const MethaneMolecule = ({ rotate }) => {
-  const moleculeRef = useRef();
+const MethaneMolecule = ({ rotate }: { rotate: boolean }) => {
+  const moleculeRef = useRef<THREE.Group>(null);
   
   useFrame((state, delta) => {
     if (moleculeRef.current && rotate) {
