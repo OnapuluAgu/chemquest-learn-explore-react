@@ -22,37 +22,45 @@ const Bond = ({ start, end, color = "#888888" }: { start: [number, number, numbe
   const midY = (start[1] + end[1]) / 2;
   const midZ = (start[2] + end[2]) / 2;
   
-  // Calculate the direction
+  // Calculate direction vector
   const dirX = end[0] - start[0];
   const dirY = end[1] - start[1];
   const dirZ = end[2] - start[2];
   
-  // Calculate the bond length
+  // Calculate length
   const length = Math.sqrt(dirX * dirX + dirY * dirY + dirZ * dirZ);
   
-  // Create a direction vector and normalize it
-  const dir = new THREE.Vector3(dirX, dirY, dirZ).normalize();
+  // Create a simple implementation that uses basic Euler rotations
+  // This avoids serialization issues with quaternions
   
-  // Create a rotation that aligns the cylinder with the direction
-  const rotation = new THREE.Euler();
+  // Simple approach: Use lookAt calculations but apply manually via Euler angles
+  const tempVec = new THREE.Vector3(dirX, dirY, dirZ).normalize();
+  const rotationEuler = new THREE.Euler();
   
-  // Default cylinder in drei is aligned with Y-axis, so we need to align it with our direction
-  if (Math.abs(dir.y) > 0.99999) {
-    // Special case when direction is parallel to Y axis
-    rotation.set(dir.y > 0 ? 0 : Math.PI, 0, 0);
+  // Handle special case when aligned with Y axis
+  if (Math.abs(tempVec.y) > 0.99999) {
+    // Bond is parallel to Y axis
+    rotationEuler.set(tempVec.y > 0 ? 0 : Math.PI, 0, 0);
   } else {
-    // Find perpendicular vector to Y and direction
-    const axis = new THREE.Vector3(0, 1, 0).cross(dir).normalize();
-    // Calculate angle between Y and direction
-    const angle = Math.acos(dir.y);
-    // Create quaternion and convert to Euler
-    const quaternion = new THREE.Quaternion().setFromAxisAngle(axis, angle);
-    rotation.setFromQuaternion(quaternion);
+    // Use a reliable method that doesn't involve quaternions directly
+    // Manually align cylinder (y-axis) with our direction vector
+    
+    // First, calculate phi (rotation around X axis)
+    const phi = Math.acos(tempVec.y);
+    
+    // Then calculate theta (rotation around Y axis)
+    const theta = Math.atan2(tempVec.z, tempVec.x);
+    
+    // Apply rotations in the correct order
+    rotationEuler.set(phi, 0, -theta);
   }
+  
+  // Convert to array of numbers for the rotation prop
+  const rotationArray = [rotationEuler.x, rotationEuler.y, rotationEuler.z];
   
   return (
     <group position={[midX, midY, midZ]}>
-      <Cylinder args={[0.1, 0.1, length, 8]} rotation={rotation.toArray() as [number, number, number]}>
+      <Cylinder args={[0.1, 0.1, length, 8]} rotation={rotationArray as [number, number, number]}>
         <meshStandardMaterial color={color} roughness={0.5} />
       </Cylinder>
     </group>
