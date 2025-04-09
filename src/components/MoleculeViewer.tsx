@@ -18,21 +18,29 @@ const AtomSphere = ({ position, color, scale = 1 }: { position: [number, number,
 
 // Bond component for connecting atoms
 const Bond = ({ start, end, color = "#888888" }: { start: [number, number, number]; end: [number, number, number]; color?: string }) => {
-  const midPoint: [number, number, number] = [(start[0] + end[0]) / 2, (start[1] + end[1]) / 2, (start[2] + end[2]) / 2];
+  const startVec = new THREE.Vector3(start[0], start[1], start[2]);
+  const endVec = new THREE.Vector3(end[0], end[1], end[2]);
   
-  // Calculate direction vector
-  const direction = [end[0] - start[0], end[1] - start[1], end[2] - start[2]];
+  // Calculate midpoint
+  const midPoint = new THREE.Vector3().addVectors(startVec, endVec).multiplyScalar(0.5);
   
-  // Calculate length of bond
-  const length = Math.sqrt(direction[0]**2 + direction[1]**2 + direction[2]**2);
+  // Calculate direction and length
+  const direction = new THREE.Vector3().subVectors(endVec, startVec);
+  const length = direction.length();
   
-  // Calculate rotation
-  const phi = Math.atan2(direction[1], direction[0]);
-  const theta = Math.acos(direction[2] / length);
+  // Create quaternion for rotation
+  const quaternion = new THREE.Quaternion();
+  const up = new THREE.Vector3(0, 1, 0);
+  
+  // Normalize the direction vector
+  direction.normalize();
+  
+  // Create quaternion from the up vector to the direction
+  quaternion.setFromUnitVectors(up, direction);
   
   return (
-    <group position={midPoint} rotation={[0, theta, phi]}>
-      <Cylinder args={[0.1, 0.1, length, 8]}>
+    <group position={[midPoint.x, midPoint.y, midPoint.z]} quaternion={quaternion}>
+      <Cylinder args={[0.1, 0.1, length, 8]} rotation={[Math.PI / 2, 0, 0]}>
         <meshStandardMaterial color={color} roughness={0.5} />
       </Cylinder>
     </group>
