@@ -1,10 +1,9 @@
-
 import { useRef, useState, Suspense } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Sphere, Cylinder, Environment, PerspectiveCamera } from "@react-three/drei";
 import { Button } from "./ui/button";
 import { Atom, Plus, Minus } from "lucide-react";
-import { Vector3 } from "three";
+import * as THREE from "three";
 
 // Atom component for the molecule
 const AtomSphere = ({ position, color, scale = 1 }: { position: [number, number, number]; color: string; scale?: number }) => {
